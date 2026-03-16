@@ -3,27 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trung tâm Giám sát Giáo dục - MySQL Version</title>
+    <title>Dashboard Crystal Clear - Power BI Mode</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dark-mode pbi-mode">
-    <div class="background-decor"></div>
     <div class="dashboard-container">
         <header>
             <div class="header-top">
                 <div class="brand">
                     <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="national-emblem">
                     <h1 class="brand-title">TRUNG TÂM GIÁM SÁT GIÁO DỤC</h1>
-                    <div class="db-status" style="margin-left: 1rem;"><span class="dot"></span> Connected: 10.163.14.45 <span class="badge" style="background: var(--primary); color: white; font-size: 0.6rem; margin-left: 0.5rem;">MySQL</span></div>
+                    <div class="db-status" style="margin-left: 1rem;"><span class="dot"></span> LIVE MySQL</div>
                 </div>
                 <div class="header-top-right">
                     <div class="filter-item">
                         <label>Năm học:</label>
                         <select id="filter-year">
-                            <option value="all">Tất cả năm học</option>
+                            <option value="all">Tất cả</option>
                             <option value="2024-2025" selected>2024-2025</option>
-                            <option value="2023-2024">2023-2024</option>
                         </select>
                     </div>
                 </div>
@@ -31,35 +29,26 @@
             <div class="header-bottom">
                 <div class="page-title">
                     <span class="grid-icon">⊞</span>
-                    <h2>Thống kê tình hình học sinh</h2>
+                    <h2>Dashboard Tối ưu Power BI</h2>
                 </div>
                 <div class="filter-group">
                     <div class="filter-item">
                         <label>Cấp học:</label>
                         <select id="filter-level">
-                            <option value="all">Tất cả cấp học</option>
+                            <option value="all">Tất cả</option>
                             <option value="Tiểu học">Tiểu học</option>
                             <option value="THCS">THCS</option>
                             <option value="THPT">THPT</option>
                         </select>
                     </div>
                     <div class="filter-item">
-                        <label>Loại hình:</label>
-                        <select id="filter-type">
-                            <option value="all">Tất cả loại hình</option>
-                            <option value="Công lập">Công lập</option>
-                            <option value="Tư thục">Tư thục</option>
-                        </select>
-                    </div>
-                    <div class="filter-item">
                         <label>Chuẩn:</label>
                         <select id="filter-standard">
-                            <option value="all">Tất cả chuẩn</option>
-                            <option value="1">Đạt chuẩn quốc gia</option>
-                            <option value="0">Chưa đạt chuẩn</option>
+                            <option value="all">Tất cả</option>
+                            <option value="1">Đạt chuẩn</option>
+                            <option value="0">Chưa đạt</option>
                         </select>
                     </div>
-                    <button id="admin-btn" class="btn-primary" onclick="window.location.href='index.html'">⚙️ Quản trị</button>
                 </div>
             </div>
         </header>
@@ -86,39 +75,11 @@
                     <p>Tổng số giáo viên</p>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card highlight">
                 <div class="icon">🏆</div>
                 <div class="info">
                     <h3 id="stat-percent-standard">0%</h3>
                     <p>Trường đạt chuẩn</p>
-                </div>
-            </div>
-            <div class="stat-card highlight">
-                <div class="icon">👶</div>
-                <div class="info">
-                    <h3 id="stat-total-g1">0</h3>
-                    <p>Học sinh Lớp 1</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="icon">🏘️</div>
-                <div class="info">
-                    <h3 id="stat-total-classes">0</h3>
-                    <p>Tổng số lớp</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="icon">📊</div>
-                <div class="info">
-                    <h3 id="stat-avg-density">0</h3>
-                    <p>Mật độ TB (HS/Lớp)</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="icon">🛠️</div>
-                <div class="info">
-                    <h3 id="stat-total-facilities">0</h3>
-                    <p>Tổng số phòng chức năng</p>
                 </div>
             </div>
         </section>
@@ -134,52 +95,32 @@
 
         <section class="charts-grid secondary-charts">
             <div class="chart-container">
-                <h3>Cơ cấu Nhân sự (Toàn ngành)</h3>
+                <h3>Cơ cấu Nhân sự</h3>
                 <canvas id="personnelChart"></canvas>
             </div>
             <div class="chart-container">
-                <h3>Cơ sở vật chất (Chi tiết số lượng)</h3>
+                <h3>Cơ sở vật chất</h3>
                 <canvas id="facilityDetailChart"></canvas>
-            </div>
-        </section>
-
-        <section class="charts-grid">
-            <div class="chart-container main-chart">
-                <h3>Phân bổ Mật độ học sinh/Lớp (Top 10 trường cao nhất)</h3>
-                <canvas id="densityChart"></canvas>
-            </div>
-            <div class="chart-container side-chart">
-                <h3>Loại hình Cơ sở</h3>
-                <canvas id="typeChart"></canvas>
-            </div>
-            <div class="chart-container wide-chart">
-                <h3>Trạng thái Cơ sở vật chất (% trường có phòng chức năng)</h3>
-                <canvas id="facilityChart"></canvas>
             </div>
         </section>
 
         <section class="table-section">
             <div class="table-header">
-                <h3>Danh sách Chi tiết (Thời gian thực MySQL)</h3>
-                <input type="text" id="school-search" placeholder="Tìm kiếm tên trường...">
+                <h3>Danh sách Chi tiết</h3>
+                <input type="text" id="school-search" placeholder="Tìm kiếm...">
             </div>
             <div class="table-wrapper">
                 <table id="school-table">
                     <thead>
                         <tr>
                             <th>Tên trường</th>
-                            <th>Loại hình</th>
-                            <th>Chuẩn</th>
-                            <th>Lớp</th>
                             <th>Học sinh</th>
-                            <th>Lớp 1</th>
-                            <th>GV/Lớp</th>
                             <th>Mật độ</th>
+                            <th>GV/Lớp</th>
+                            <th>Chuẩn</th>
                         </tr>
                     </thead>
-                    <tbody id="school-table-body">
-                        <!-- Data will be injected here -->
-                    </tbody>
+                    <tbody id="school-table-body"></tbody>
                 </table>
             </div>
         </section>

@@ -7,6 +7,14 @@ let filteredData = [];
 const charts = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Detect Power BI Clear Mode
+    if (document.body.classList.contains('pbi-mode')) {
+        Chart.defaults.font.size = 13;
+        Chart.defaults.font.weight = 'bold';
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
+    }
+
     try {
         await loadDataFromAPI();
         initDashboard();

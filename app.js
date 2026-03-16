@@ -3,6 +3,14 @@ let filteredData = [];
 let charts = {};
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Detect Power BI Clear Mode
+    if (document.body.classList.contains('pbi-mode')) {
+        Chart.defaults.font.size = 13;
+        Chart.defaults.font.weight = 'bold';
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
+    }
+
     try {
         // Use the global EDUCATION_DATA from data.js
         if (typeof EDUCATION_DATA === 'undefined') {

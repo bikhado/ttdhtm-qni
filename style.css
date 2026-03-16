@@ -479,7 +479,70 @@ tr:hover td {
     color: #f87171;
 }
 
-@media (max-width: 1024px) {
-    .charts-grid { grid-template-columns: 1fr; }
-    .wide-chart { grid-column: auto; }
+
+/* --- POWER BI OPTIMIZATION MODE --- */
+/* Use this class on <body> to enable maximum clarity for embedding */
+
+.pbi-mode {
+    --bg: #020617; /* Extra dark background */
+    --card-bg: #1e293b; /* Solid - No transparency */
+    --text-dim: #cbd5e1; /* Brighter secondary text */
 }
+
+.pbi-mode .background-decor {
+    display: none; /* Remove background blurs - they cause rendering noise in PBI */
+}
+
+.pbi-mode .stat-card, 
+.pbi-mode .chart-container, 
+.pbi-mode .table-section,
+.pbi-mode header {
+    backdrop-filter: none !important;
+    background: var(--card-bg) !important;
+    border: 2px solid #334155 !important; /* Thicker, sharper borders */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.pbi-mode .stat-card h3 {
+    font-weight: 800 !important;
+    font-size: 2.2rem !important;
+    color: #ffffff !important;
+}
+
+.pbi-mode .stat-card .icon {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pbi-mode .chart-container h3, 
+.pbi-mode .table-section h3 {
+    font-weight: 700 !important;
+    font-size: 1.2rem !important;
+    color: #f1f5f9 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pbi-mode th {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.pbi-mode td {
+    border-bottom: 2px solid #334155 !important;
+    font-weight: 500 !important;
+}
+
+.pbi-mode .school-name {
+    color: #ffffff !important;
+}
+
+.pbi-mode .school-level-badge {
+    background: var(--primary) !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+}
+
+/* Adjust Chart.js fonts via CSS-like properties if needed, 
+   but primarily handled in JS initialization */
