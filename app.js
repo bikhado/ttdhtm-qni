@@ -398,9 +398,6 @@ function setupFilters() {
     if (yearF) yearF.addEventListener('change', triggerFilter);
     if (levelF) levelF.addEventListener('change', triggerFilter);
     if (typeF) typeF.addEventListener('change', triggerFilter);
-    if (yearF) yearF.addEventListener('change', triggerFilter);
-    if (levelF) levelF.addEventListener('change', triggerFilter);
-    if (typeF) typeF.addEventListener('change', triggerFilter);
     if (standardF) standardF.addEventListener('change', triggerFilter);
     if (searchF) searchF.addEventListener('input', triggerFilter);
 
