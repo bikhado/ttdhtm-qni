@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDataFromAPI();
         initDashboard();
         setupFilters();
+        setupModal();
     } catch (error) {
         console.error('Initial load failed:', error);
         alert('Không thể kết nối tới server API hoặc database.');
@@ -380,5 +381,164 @@ function updateYearDropdown(yearF) {
         const currentVal = yearF.value;
         yearF.innerHTML = '<option value="all">Tất cả năm học</option>' +
             years.map(y => `<option value="${y}" ${y === currentVal ? 'selected' : ''}>${y}</option>`).join('');
+    }
+}
+
+function setupModal() {
+    const modal = document.getElementById('admin-modal');
+    const btn = document.getElementById('admin-btn');
+    const span = document.getElementsByClassName('close')[0];
+    
+    const dbTypeSelect = document.getElementById('db-type');
+    const pgPassGroup = document.getElementById('db-password-group');
+    const fileInput = document.getElementById('file-upload');
+    const fileNameSpan = document.getElementById('file-name');
+    const confirmBtn = document.getElementById('btn-confirm-import');
+
+    if (!btn || !modal) return;
+
+    btn.onclick = () => modal.style.display = "block";
+    if (span) span.onclick = () => modal.style.display = "none";
+    window.onclick = (event) => {
+        if (event.target == modal) modal.style.display = "none";
+    }
+
+    if (dbTypeSelect) {
+        dbTypeSelect.onchange = (e) => {
+            if (pgPassGroup) pgPassGroup.style.display = e.target.value === 'mysql' ? 'block' : 'none';
+        };
+    }
+
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (fileNameSpan) fileNameSpan.innerText = file.name;
+                handleFilePreview(file);
+            }
+        };
+    }
+
+    if (confirmBtn) confirmBtn.onclick = () => handleImport();
+
+    const templateBtn = document.getElementById('btn-download-template');
+    if (templateBtn) templateBtn.onclick = () => handleDownloadTemplate();
+}
+
+async function handleDownloadTemplate() {
+    const fileInput = document.getElementById('file-upload');
+    if (!fileInput || !fileInput.files.length) return alert("Vui lòng chọn file trước!");
+
+    try {
+        const response = await fetch('http://localhost:5000/api/download-template', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: fileInput.files[0].name })
+        });
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "template_sua_loi.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        alert("Lỗi khi tải template: " + error);
+    }
+}
+
+async function handleFilePreview(file) {
+    const previewDiv = document.getElementById('mapping-preview');
+    const mappingBody = document.getElementById('mapping-body');
+    const statusDiv = document.getElementById('import-status');
+    const levelBadge = document.getElementById('preview-level');
+    const selectedLevel = document.getElementById('import-level')?.value;
+
+    if (statusDiv) statusDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                filename: file.name,
+                level: selectedLevel 
+            })
+        });
+        
+        const result = await response.json();
+        if (result.error) {
+            alert("Lỗi: " + result.error);
+            return;
+        }
+
+        if (levelBadge) levelBadge.innerText = result.level;
+        if (previewDiv) previewDiv.style.display = 'block';
+        if (mappingBody) {
+            mappingBody.innerHTML = result.mapping.map(m => `
+                <tr>
+                    <td style="padding: 0.5rem;">${m.column}</td>
+                    <td style="text-align: center; padding: 0.5rem;" class="${m.status === 'OK' ? 'status-ok' : 'status-missing'}">
+                        ${m.status === 'OK' ? '✅ Khớp' : '❌ Thiếu'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+    } catch (error) {
+        console.error("Preview error:", error);
+        alert("Không thể kết nối tới server API. Đảm bảo api_server.py đang chạy.");
+    }
+}
+
+async function handleImport() {
+    const fileInput = document.getElementById('file-upload');
+    const year = document.getElementById('import-year')?.value;
+    const level = document.getElementById('import-level')?.value;
+    const dbType = document.getElementById('db-type')?.value;
+    const password = document.getElementById('db-password')?.value;
+    const statusDiv = document.getElementById('import-status');
+    
+    if (!fileInput || !fileInput.files.length) return alert("Vui lòng chọn file!");
+
+    if (statusDiv) {
+        statusDiv.className = '';
+        statusDiv.style.display = 'block';
+        statusDiv.innerText = "⏳ Đang xử lý dữ liệu (" + level + ")...";
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/api/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                filename: fileInput.files[0].name,
+                year: year,
+                level: level,
+                db_type: dbType,
+                password: password
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            if (statusDiv) {
+                statusDiv.className = 'success';
+                statusDiv.innerHTML = `✅ Thành công! Đã nhập <strong>${result.count}</strong> trường vào hệ thống.<br>Vui lòng F5 để cập nhật Dashbroad.`;
+            }
+        } else {
+            if (statusDiv) {
+                statusDiv.className = 'error';
+                statusDiv.innerText = "❌ Lỗi: " + result.error;
+            }
+        }
+    } catch (error) {
+        if (statusDiv) {
+            statusDiv.className = 'error';
+            statusDiv.innerText = "❌ Lỗi kết nối server API.";
+        }
     }
 }
