@@ -43,13 +43,33 @@ function initDashboard() {
 }
 
 function updateStats() {
+    const level = document.getElementById('filter-level')?.value || 'all';
+    let entranceGradeKey = 'g1_students';
+    let entranceLabel = 'Học sinh Lớp 1';
+    
+    if (level === 'THCS') {
+        entranceGradeKey = 'g6_students';
+        entranceLabel = 'Học sinh Lớp 6';
+    } else if (level === 'THPT') {
+        entranceGradeKey = 'g10_students';
+        entranceLabel = 'Học sinh Lớp 10';
+    } else if (level === 'all') {
+        entranceLabel = 'Học sinh Đầu cấp';
+    }
+
     const totalSchools = filteredData.length;
-    const totalStudents = filteredData.reduce((sum, s) => sum + s.students, 0);
-    const totalTeachers = filteredData.reduce((sum, s) => sum + s.teachers, 0);
+    const totalStudents = filteredData.reduce((sum, s) => sum + (s.students || 0), 0);
+    const totalTeachers = filteredData.reduce((sum, s) => sum + (s.teachers || 0), 0);
     const standardSchools = filteredData.filter(s => s.is_standard).length;
     
-    const totalG1 = filteredData.reduce((sum, s) => sum + s.g1_students, 0);
-    const totalClasses = filteredData.reduce((sum, s) => sum + s.classes, 0);
+    let totalEntrance = 0;
+    if (level === 'all') {
+        totalEntrance = filteredData.reduce((sum, s) => sum + (s.g1_students || 0) + (s.g6_students || 0) + (s.g10_students || 0), 0);
+    } else {
+        totalEntrance = filteredData.reduce((sum, s) => sum + (s[entranceGradeKey] || 0), 0);
+    }
+
+    const totalClasses = filteredData.reduce((sum, s) => sum + (s.classes || 0), 0);
     const avgDensity = totalClasses > 0 ? (totalStudents / totalClasses).toFixed(1) : 0;
     const totalFacilities = filteredData.reduce((sum, s) => sum + (s.total_facilities || 0), 0);
     
@@ -58,7 +78,12 @@ function updateStats() {
     document.getElementById('stat-total-teachers').innerText = totalTeachers.toLocaleString();
     document.getElementById('stat-percent-standard').innerText = 
         totalSchools > 0 ? Math.round((standardSchools / totalSchools) * 100) + '%' : '0%';
-    document.getElementById('stat-total-g1').innerText = totalG1.toLocaleString();
+    
+    // Update card label and value
+    const entranceCardLabel = document.querySelector('#stat-total-g1').parentElement.querySelector('p');
+    if (entranceCardLabel) entranceCardLabel.innerText = entranceLabel;
+    document.getElementById('stat-total-g1').innerText = totalEntrance.toLocaleString();
+    
     document.getElementById('stat-total-classes').innerText = totalClasses.toLocaleString();
     document.getElementById('stat-avg-density').innerText = avgDensity;
     document.getElementById('stat-total-facilities').innerText = totalFacilities.toLocaleString();
@@ -260,8 +285,38 @@ function renderCharts() {
 }
 
 function renderTable() {
+    const level = document.getElementById('filter-level')?.value || 'all';
+    let entranceGradeKey = 'g1_students';
+    let entranceColLabel = 'Lớp 1';
+    
+    if (level === 'THCS') {
+        entranceGradeKey = 'g6_students';
+        entranceColLabel = 'Lớp 6';
+    } else if (level === 'THPT') {
+        entranceGradeKey = 'g10_students';
+        entranceColLabel = 'Lớp 10';
+    } else if (level === 'all') {
+        entranceColLabel = 'Đầu cấp';
+    }
+
     const tbody = document.getElementById('school-table-body');
-    tbody.innerHTML = filteredData.slice(0, 50).map(s => `
+    const thead = document.querySelector('#school-table thead tr');
+    
+    if (thead) {
+        const ths = thead.querySelectorAll('th');
+        if (ths.length > 5) ths[5].innerText = entranceColLabel;
+    }
+
+    if (!tbody) return;
+    tbody.innerHTML = filteredData.slice(0, 50).map(s => {
+        let entranceVal = 0;
+        if (level === 'all') {
+            entranceVal = (s.g1_students || 0) + (s.g6_students || 0) + (s.g10_students || 0);
+        } else {
+            entranceVal = s[entranceGradeKey] || 0;
+        }
+
+        return `
         <tr>
             <td>
                 <div class="school-name">${s.name}</div>
@@ -269,13 +324,13 @@ function renderTable() {
             </td>
             <td><span class="badge ${s.type === 'Công lập' ? 'badge-success' : 'badge-warning'}">${s.type}</span></td>
             <td>${s.is_standard ? '✅' : '❌'}</td>
-            <td>${s.classes}</td>
-            <td>${s.students}</td>
-            <td><strong>${s.g1_students || s.g6_students || s.g10_students}</strong></td>
-            <td>${s.teacher_ratio}</td>
-            <td><strong>${s.student_density}</strong></td>
+            <td>${s.classes || 0}</td>
+            <td>${(s.students || 0).toLocaleString()}</td>
+            <td><strong>${entranceVal.toLocaleString()}</strong></td>
+            <td>${s.teacher_ratio || 0}</td>
+            <td><strong>${s.student_density || 0}</strong></td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function setupFilters() {
