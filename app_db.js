@@ -399,12 +399,6 @@ function setupFilters() {
     if (standardF) standardF.onchange = triggerFilter;
     if (searchF) searchF.oninput = triggerFilter;
 
-    // Additional filters for rebranding (placeholders for now)
-    const ethnicF = document.getElementById('filter-ethnic');
-    const genderF = document.getElementById('filter-gender');
-    if (ethnicF) ethnicF.onchange = triggerFilter;
-    if (genderF) genderF.onchange = triggerFilter;
-
     // Dynamically populate year filter if possible
     updateYearDropdown(yearF);
 }

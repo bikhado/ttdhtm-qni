@@ -398,11 +398,11 @@ function setupFilters() {
     if (yearF) yearF.addEventListener('change', triggerFilter);
     if (levelF) levelF.addEventListener('change', triggerFilter);
     if (typeF) typeF.addEventListener('change', triggerFilter);
+    if (yearF) yearF.addEventListener('change', triggerFilter);
+    if (levelF) levelF.addEventListener('change', triggerFilter);
+    if (typeF) typeF.addEventListener('change', triggerFilter);
     if (standardF) standardF.addEventListener('change', triggerFilter);
     if (searchF) searchF.addEventListener('input', triggerFilter);
-
-    if (ethnicF) ethnicF.addEventListener('change', triggerFilter);
-    if (genderF) genderF.addEventListener('change', triggerFilter);
 
     // Auto-populate years if they exist in data. If not, use the one from metadata
     if (yearF) {
