@@ -394,27 +394,34 @@ function setupModal() {
     const fileNameSpan = document.getElementById('file-name');
     const confirmBtn = document.getElementById('btn-confirm-import');
 
+    if (!btn || !modal) return; // Exit if admin elements are not present
+
     btn.onclick = () => modal.style.display = "block";
-    span.onclick = () => modal.style.display = "none";
+    if (span) span.onclick = () => modal.style.display = "none";
     window.onclick = (event) => {
         if (event.target == modal) modal.style.display = "none";
     }
 
-    dbTypeSelect.onchange = (e) => {
-        pgPassGroup.style.display = e.target.value === 'mysql' ? 'block' : 'none';
-    };
+    if (dbTypeSelect) {
+        dbTypeSelect.onchange = (e) => {
+            if (pgPassGroup) pgPassGroup.style.display = e.target.value === 'mysql' ? 'block' : 'none';
+        };
+    }
 
-    fileInput.onchange = (e) => {
-        if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            fileNameSpan.innerText = file.name;
-            handleFilePreview(file);
-        }
-    };
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (fileNameSpan) fileNameSpan.innerText = file.name;
+                handleFilePreview(file);
+            }
+        };
+    }
 
-    confirmBtn.onclick = () => handleImport();
+    if (confirmBtn) confirmBtn.onclick = () => handleImport();
 
-    document.getElementById('btn-download-template').onclick = () => handleDownloadTemplate();
+    const templateBtn = document.getElementById('btn-download-template');
+    if (templateBtn) templateBtn.onclick = () => handleDownloadTemplate();
 }
 
 async function handleDownloadTemplate() {
