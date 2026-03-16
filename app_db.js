@@ -5,6 +5,8 @@
 let allData = [];
 let filteredData = [];
 const charts = {};
+let currentPage = 1;
+const rowsPerPage = 20;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Detect Power BI Clear Mode
@@ -20,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initDashboard();
         setupFilters();
         setupModal();
+        setupPagination();
     } catch (error) {
         console.error('Initial load failed:', error);
         alert('Không thể kết nối tới server API hoặc database.');
@@ -307,7 +310,24 @@ function renderTable() {
     }
 
     if (!tbody) return;
-    tbody.innerHTML = filteredData.slice(0, 50).map(s => {
+
+    // Sort: Primary -> THCS -> THPT, then by name
+    const sortedData = [...filteredData].sort((a, b) => {
+        if (a.level !== b.level) {
+            const levelOrder = { 'Tiểu học': 1, 'THCS': 2, 'THPT': 3 };
+            return (levelOrder[a.level] || 9) - (levelOrder[b.level] || 9);
+        }
+        return a.name.localeCompare(b.name);
+    });
+
+    const totalPages = Math.ceil(sortedData.length / rowsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageData = sortedData.slice(start, end);
+
+    tbody.innerHTML = pageData.map(s => {
         let entranceVal = 0;
         if (level === 'all') {
             entranceVal = (s.g1_students || 0) + (s.g6_students || 0) + (s.g10_students || 0);
@@ -330,6 +350,20 @@ function renderTable() {
             <td><strong>${s.student_density || 0}</strong></td>
         </tr>
     `}).join('');
+
+    updatePaginationUI(totalPages);
+}
+
+function updatePaginationUI(totalPages) {
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageDisplay = document.getElementById('current-page-display');
+    const totalDisplay = document.getElementById('total-pages-display');
+
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+    if (pageDisplay) pageDisplay.innerText = currentPage;
+    if (totalDisplay) totalDisplay.innerText = totalPages;
 }
 
 function setupFilters() {
@@ -355,6 +389,7 @@ function setupFilters() {
             return matchYear && matchLevel && matchType && matchStandard && matchSearch;
         });
 
+        currentPage = 1;
         initDashboard();
     };
 
@@ -372,6 +407,32 @@ function setupFilters() {
 
     // Dynamically populate year filter if possible
     updateYearDropdown(yearF);
+}
+
+function setupPagination() {
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+                document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+                document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+    }
 }
 
 function updateYearDropdown(yearF) {
