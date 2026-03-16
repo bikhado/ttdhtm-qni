@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trung tâm Giám sát Giáo dục - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-decor"></div>
+    <div class="dashboard-container">
+        <header>
+            <div class="header-top">
+                <div class="brand">
+                    <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="national-emblem">
+                    <h1 class="brand-title">TRUNG TÂM GIÁM SÁT GIÁO DỤC</h1>
+                    <div class="db-status" style="margin-left: 1rem;"><span class="dot" style="background: var(--primary);"></span> Local Data <span class="badge" style="background: var(--primary); color: white; font-size: 0.6rem; margin-left: 0.5rem;">SQLite</span></div>
+                </div>
+                <div class="header-top-right">
+                    <div class="filter-item">
+                        <label>Năm học:</label>
+                        <select id="filter-year">
+                            <option value="all">Tất cả năm học</option>
+                            <option value="2024-2025">2024-2025</option>
+                            <option value="2023-2024">2023-2024</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="header-bottom">
+                <div class="page-title">
+                    <span class="grid-icon">⊞</span>
+                    <h2>Thống kê tình hình học sinh</h2>
+                </div>
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label>Cấp học:</label>
+                        <select id="filter-level">
+                            <option value="all">Tất cả cấp học</option>
+                            <option value="Tiểu học">Tiểu học</option>
+                            <option value="THCS">THCS</option>
+                            <option value="THPT">THPT</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Loại hình:</label>
+                        <select id="filter-type">
+                            <option value="all">Tất cả loại hình</option>
+                            <option value="Công lập">Công lập</option>
+                            <option value="Tư thục">Tư thục</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Chuẩn:</label>
+                        <select id="filter-standard">
+                            <option value="all">Tất cả chuẩn</option>
+                            <option value="true">Đạt chuẩn quốc gia</option>
+                            <option value="false">Chưa đạt chuẩn</option>
+                        </select>
+                    </div>
+                    <button id="admin-btn" class="btn-primary">⚙️ Quản trị</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="stats-grid" id="stats-cards">
+            <div class="stat-card">
+                <div class="icon">🏫</div>
+                <div class="info">
+                    <h3 id="stat-total-schools">0</h3>
+                    <p>Tổng số trường</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">👨‍🎓</div>
+                <div class="info">
+                    <h3 id="stat-total-students">0</h3>
+                    <p>Tổng số học sinh</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">👩‍🏫</div>
+                <div class="info">
+                    <h3 id="stat-total-teachers">0</h3>
+                    <p>Tổng số giáo viên</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🏆</div>
+                <div class="info">
+                    <h3 id="stat-percent-standard">0%</h3>
+                    <p>Trường đạt chuẩn</p>
+                </div>
+            </div>
+            <div class="stat-card highlight">
+                <div class="icon">👶</div>
+                <div class="info">
+                    <h3 id="stat-total-g1">0</h3>
+                    <p>Học sinh Lớp 1</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🏘️</div>
+                <div class="info">
+                    <h3 id="stat-total-classes">0</h3>
+                    <p>Tổng số lớp</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="info">
+                    <h3 id="stat-avg-density">0</h3>
+                    <p>Mật độ TB (HS/Lớp)</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🛠️</div>
+                <div class="info">
+                    <h3 id="stat-total-facilities">0</h3>
+                    <p>Tổng số phòng chức năng</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="charts-grid">
+            <div class="chart-container wide-chart">
+                <h3>Phân bổ Học sinh theo Khối lớp</h3>
+                <div class="chart-height">
+                    <canvas id="gradeDistributionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="charts-grid secondary-charts">
+            <div class="chart-container">
+                <h3>Cơ cấu Nhân sự (Toàn ngành)</h3>
+                <canvas id="personnelChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Cơ sở vật chất (Chi tiết số lượng)</h3>
+                <canvas id="facilityDetailChart"></canvas>
+            </div>
+        </section>
+
+        <section class="charts-grid">
+            <div class="chart-container main-chart">
+                <h3>Phân bổ Mật độ học sinh/Lớp (Top 10 trường cao nhất)</h3>
+                <canvas id="densityChart"></canvas>
+            </div>
+            <div class="chart-container side-chart">
+                <h3>Loại hình Cơ sở</h3>
+                <canvas id="typeChart"></canvas>
+            </div>
+            <div class="chart-container wide-chart">
+                <h3>Trạng thái Cơ sở vật chất (% trường có phòng chức năng)</h3>
+                <canvas id="facilityChart"></canvas>
+            </div>
+        </section>
+
+        <section class="table-section">
+            <div class="table-header">
+                <h3>Danh sách Chi tiết</h3>
+                <input type="text" id="school-search" placeholder="Tìm kiếm tên trường...">
+            </div>
+            <div class="table-wrapper">
+                <table id="school-table">
+                    <thead>
+                        <tr>
+                            <th>Tên trường</th>
+                            <th>Loại hình</th>
+                            <th>Chuẩn</th>
+                            <th>Lớp</th>
+                            <th>Học sinh</th>
+                            <th>Lớp 1</th>
+                            <th>GV/Lớp</th>
+                            <th>Mật độ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="school-table-body">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cấu hình & Nhập dữ liệu</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="import-section">
+                    <h3>Nhập dữ liệu & Kiểm tra Mapping</h3>
+                    <p>Hệ thống tự động nhận diện cấp học và kiểm tra độ khớp của các tiêu đề cột trong file Excel.</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Năm học:</label>
+                            <input type="text" id="import-year" value="2024-2025" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label>Cấp học:</label>
+                            <select id="import-level" style="width: 100%;">
+                                <option value="Tiểu học">Tiểu học</option>
+                                <option value="THCS">Trung học cơ sở (THCS)</option>
+                                <option value="THPT">Trung học phổ thông (THPT)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Loại cơ sở dữ liệu:</label>
+                            <select id="db-type" style="width: 100%;">
+                                <option value="sqlite">Local (SQLite + data.js)</option>
+                                <option value="mysql">Remote (MySQL 10.163.14.45)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="db-password-group" class="form-group" style="display: none; margin-top: 1rem;">
+                        <label>Mật khẩu MySQL:</label>
+                        <input type="password" id="db-password" placeholder="Nhập mật khẩu..." style="width: 100%;">
+                    </div>
+
+                    <div class="import-controls" style="margin-top: 1.5rem;">
+                        <label for="file-upload" class="btn-primary" style="display: inline-flex; justify-content: center;">
+                            📁 Chọn file Excel
+                        </label>
+                        <input id="file-upload" type="file" style="display: none;" accept=".xlsx, .xls">
+                        <span id="file-name" style="margin-left: 1rem; opacity: 0.7;">Chưa chọn file</span>
+                    </div>
+
+                    <div id="mapping-preview" style="margin-top: 1.5rem; display: none;">
+                        <h4 style="margin-bottom: 0.5rem;">Trạng thái Mapping Cột: <span id="preview-level" class="badge"></span></h4>
+                        <div class="preview-scroll" style="max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <table class="preview-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                <thead style="position: sticky; top: 0; background: #1e293b;">
+                                    <tr>
+                                        <th style="text-align: left; padding: 0.5rem;">Cột yêu cầu</th>
+                                        <th style="padding: 0.5rem;">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mapping-body">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="import-actions" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                            <button id="btn-confirm-import" class="btn-import" style="flex: 2;">🚀 Xác nhận Import</button>
+                            <button id="btn-download-template" class="btn-primary" style="flex: 1; font-size: 0.8rem;">📥 Tải template sửa lỗi</button>
+                        </div>
+                    </div>
+
+                    <div id="import-status" style="margin-top: 1rem; padding: 1rem; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
