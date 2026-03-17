@@ -54,3 +54,14 @@ CREATE TABLE IF NOT EXISTS antigravity_school_facilities (
     UNIQUE KEY school_year_idx (school_id, school_year),
     FOREIGN KEY (school_id) REFERENCES antigravity_schools(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- GDTX (Continuing Education) stats
+CREATE TABLE IF NOT EXISTS antigravity_gdtx_stats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category VARCHAR(255) NOT NULL,
+    sub_category VARCHAR(255),
+    unit VARCHAR(50),
+    value DOUBLE,
+    school_year VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -68,3 +68,14 @@ CREATE TABLE IF NOT EXISTS school_facilities (
     FOREIGN KEY (school_id) REFERENCES schools(id),
     UNIQUE(school_id, school_year)
 );
+
+-- GDTX (Continuing Education) stats
+CREATE TABLE IF NOT EXISTS gdtx_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    sub_category TEXT,
+    unit TEXT,
+    value REAL,
+    school_year TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

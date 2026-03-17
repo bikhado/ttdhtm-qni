@@ -29,12 +29,16 @@ def preview_import():
         return jsonify({'error': 'File not found'}), 404
     
     importer = ExcelImporter()
-    mapping, headers = importer.get_mapping_status(file_path, level_override)
+    
+    if level_override == 'GDTX':
+        mapping, headers = importer.get_mapping_status_gdtx(file_path)
+    else:
+        mapping, headers = importer.get_mapping_status(file_path, level_override)
     
     return jsonify({
         'level': level_override or importer.detect_level(file_path),
         'mapping': mapping,
-        'headers': headers[:20] 
+        'headers': headers[:20] if headers else []
     })
 
 @app.route('/api/import', methods=['POST'])
@@ -139,6 +143,59 @@ def download_template():
         as_attachment=True,
         download_name='correction_template.xlsx'
     )
+
+@app.route('/api/gdtx', methods=['GET'])
+def get_gdtx_data():
+    db_type = request.args.get('db_type', 'sqlite')
+    year = request.args.get('year', '2024-2025')
+    
+    try:
+        if db_type == 'mysql':
+            import mysql.connector
+            config = db_config.get_config()
+            conn = mysql.connector.connect(**config)
+            prefix = db_config.TABLE_PREFIX
+        else:
+            conn = sqlite3.connect('education.db')
+            prefix = ""
+            
+        cursor = conn.cursor(dictionary=True) if db_type == 'mysql' else conn.cursor()
+        query = f"SELECT category, sub_category, unit, value FROM {prefix}gdtx_stats WHERE school_year = %s" if db_type == 'mysql' else f"SELECT category, sub_category, unit, value FROM gdtx_stats WHERE school_year = ?"
+        cursor.execute(query, (year,))
+        rows = cursor.fetchall()
+        
+        # Convert sqlite rows to dicts if needed
+        if db_type == 'sqlite':
+            results = []
+            for r in rows:
+                results.append({'category': r[0], 'sub_category': r[1], 'unit': r[2], 'value': r[3]})
+            rows = results
+            
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/import-gdtx', methods=['POST'])
+def run_import_gdtx():
+    data = request.json
+    filename = data.get('filename')
+    year = data.get('year', '2024-2025')
+    db_type = data.get('db_type', 'sqlite')
+    password = data.get('password')
+    
+    file_path = os.path.join(os.getcwd(), filename)
+    try:
+        success = importer.import_gdtx(file_path, year)
+        
+        if success:
+            if db_type == 'sqlite':
+                export_to_json()
+            return jsonify({'success': True})
+        else:
+            return jsonify({'error': 'Lỗi trong quá trình đọc hoặc ghi dữ liệu GDTX.'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

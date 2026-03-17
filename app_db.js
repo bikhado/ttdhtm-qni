@@ -18,11 +18,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
+        setupTabs();
         await loadDataFromAPI();
         initDashboard();
         setupFilters();
         setupModal();
         setupPagination();
+        
+        // Initial GDTX load if on that tab or for cache
+        await loadGdtxData();
     } catch (error) {
         console.error('Initial load failed:', error);
         alert('Không thể kết nối tới server API hoặc database.');
@@ -47,6 +51,25 @@ async function loadDataFromAPI() {
     } else {
         filteredData = [...allData];
     }
+}
+function setupTabs() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tabId = item.getAttribute('data-tab');
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'gdtx-view') {
+                loadGdtxData();
+            } else {
+                initDashboard();
+            }
+        });
+    });
 }
 
 function initDashboard() {
@@ -566,7 +589,8 @@ async function handleImport() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/import', {
+        const endpoint = level === 'GDTX' ? 'http://localhost:5000/api/import-gdtx' : 'http://localhost:5000/api/import';
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -582,7 +606,9 @@ async function handleImport() {
         if (result.success) {
             if (statusDiv) {
                 statusDiv.className = 'success';
-                statusDiv.innerHTML = `✅ Thành công! Đã nhập <strong>${result.count}</strong> trường vào hệ thống.<br>Vui lòng F5 để cập nhật Dashbroad.`;
+                let msg = `✅ Thành công! Đã nhập dữ liệu vào hệ thống.<br>Vui lòng F5 để cập nhật Dashbroad.`;
+                if (result.count) msg = `✅ Thành công! Đã nhập <strong>${result.count}</strong> trường vào hệ thống.<br>Vui lòng F5 để cập nhật Dashbroad.`;
+                statusDiv.innerHTML = msg;
             }
         } else {
             if (statusDiv) {
@@ -596,4 +622,115 @@ async function handleImport() {
             statusDiv.innerText = "❌ Lỗi kết nối server API.";
         }
     }
+}
+// --- GDTX Logic (MySQL) ---
+let gdtxData = [];
+
+async function loadGdtxData() {
+    try {
+        const year = document.getElementById('filter-year-gdtx')?.value || '2024-2025';
+        const response = await fetch(`http://localhost:5000/api/gdtx?db_type=mysql&year=${year}`);
+        gdtxData = await response.json();
+        
+        if (gdtxData.error) throw new Error(gdtxData.error);
+        
+        renderGdtxStats();
+        renderGdtxCharts();
+        renderGdtxTable();
+    } catch (err) {
+        console.error("GDTX Load Error:", err);
+    }
+}
+
+function renderGdtxStats() {
+    const container = document.getElementById('gdtx-stats-cards');
+    if (!container) return;
+    const getVal = (sub) => gdtxData.find(d => d.sub_category === sub)?.value || 0;
+
+    const stats = [
+        { icon: '🏛️', label: 'Tổng số trung tâm', val: getVal('Tổng số').toLocaleString() },
+        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getVal('Tổng số').toLocaleString() },
+        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getVal('Tổng số').toLocaleString() },
+        { icon: '💰', label: 'Tổng ngân sách (Tr.đ)', val: getVal('Tổng chi').toLocaleString() }
+    ];
+
+    container.innerHTML = stats.map(s => `
+        <div class="stat-card">
+            <div class="icon">${s.icon}</div>
+            <div class="info">
+                <h3>${s.val}</h3>
+                <p>${s.label}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderGdtxCharts() {
+    const getVal = (sub) => gdtxData.find(d => d.sub_category === sub)?.value || 0;
+
+    // Grade Chart
+    if (charts.gdtxGrade) charts.gdtxGrade.destroy();
+    charts.gdtxGrade = new Chart(document.getElementById('gdtxGradeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Lớp 10', 'Lớp 11', 'Lớp 12'],
+            datasets: [{
+                label: 'Học viên',
+                data: [getVal('Lớp 10'), getVal('Lớp 11'), getVal('Lớp 12')],
+                backgroundColor: 'rgba(79, 172, 254, 0.7)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Personnel
+    if (charts.gdtxStaff) charts.gdtxStaff.destroy();
+    charts.gdtxStaff = new Chart(document.getElementById('gdtxPersonnelChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Quản lý', 'Giáo viên', 'Nhân viên'],
+            datasets: [{
+                data: [getVal('Cán bộ quản lý'), getVal('Giáo viên'), getVal('Nhân viên')],
+                backgroundColor: ['#f43f5e', '#4facfe', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // Budget
+    if (charts.gdtxBudget) charts.gdtxBudget.destroy();
+    charts.gdtxBudget = new Chart(document.getElementById('gdtxBudgetChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Thanh toán cá nhân', 'Chi thường xuyên'],
+            datasets: [{
+                data: [getVal('Chi thanh toán cá nhân'), getVal('Chi thường xuyên')],
+                backgroundColor: ['#fbbf24', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+function renderGdtxTable() {
+    const tbody = document.querySelector('#gdtx-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = gdtxData.map(d => `
+        <tr>
+            <td><strong>${d.category}</strong></td>
+            <td>${d.sub_category}</td>
+            <td>${d.unit}</td>
+            <td><strong>${d.value.toLocaleString()}</strong></td>
+        </tr>
+    `).join('');
 }

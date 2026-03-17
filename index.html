@@ -12,12 +12,35 @@
 </head>
 <body class="dark-mode pbi-mode">
     <div class="background-decor"></div>
-    <div class="dashboard-container">
-        <header>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="sidebar-logo">
+                <h3 class="sidebar-title">IOC GIÁO DỤC</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="general-view">
+                    <span class="nav-icon">🏫</span>
+                    <span class="nav-text">Giáo dục Phổ thông</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="gdtx-view">
+                    <span class="nav-icon">🎓</span>
+                    <span class="nav-text">Giáo dục Thường xuyên</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- TAB: General Education (Existing Dashboard) -->
+            <div id="general-view" class="tab-content active">
+                <header>
             <div class="header-top">
                 <div class="brand">
                     <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="national-emblem">
-                    <h1 class="brand-title">TRUNG TÂM GIÁM SÁT GIÁO DỤC</h1>
+                    <h1 class="brand-title">IOC GIÁO DỤC</h1>
                     <!-- <div class="db-status" style="margin-left: 1rem;"><span class="dot" style="background: var(--primary);"></span> Local Data <span class="badge" style="background: var(--primary); color: white; font-size: 0.6rem; margin-left: 0.5rem;">SQLite</span></div> -->
                 </div>
                 <div class="header-top-right">
@@ -196,7 +219,53 @@
                     Sau <span>→</span>
                 </button>
             </div>
-        </section>
+                </section>
+            </div>
+
+            <!-- TAB: Continuing Education (GDTX) -->
+            <div id="gdtx-view" class="tab-content">
+                <header>
+                    <div class="header-top">
+                        <div class="brand">
+                            <span class="grid-icon">📊</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 600;">Thống kê Giáo dục Thường xuyên</h2>
+                        </div>
+                        <div class="header-top-right">
+                            <div class="filter-item">
+                                <label>Năm học:</label>
+                                <select id="filter-year-gdtx">
+                                    <option value="2024-2025">2024-2025</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <section class="stats-grid" id="gdtx-stats-cards">
+                    <!-- Populated by JS -->
+                </section>
+
+                <section class="charts-grid gdtx-charts-area">
+                    <div class="chart-container wide-chart">
+                        <h3>Phân bổ Học viên theo Khối lớp (GDTX)</h3>
+                        <div class="chart-height">
+                            <canvas id="gdtxGradeChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="charts-grid secondary-charts">
+                    <div class="chart-container">
+                        <h3>Cơ cấu Nhân sự trung tâm</h3>
+                        <canvas id="gdtxPersonnelChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Phân bổ kinh phí</h3>
+                        <canvas id="gdtxBudgetChart"></canvas>
+                    </div>
+                </section>
+            </div>
+        </main>
     </div>
     <script src="data.js"></script>
     <script src="app.js"></script>

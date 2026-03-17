@@ -10,6 +10,7 @@
     --gold: #ffcc00;
     --glass: rgba(255, 255, 255, 0.05);
     --glass-border: rgba(255, 255, 255, 0.1);
+    --sidebar-width: 260px;
 }
 
 .db-status {
@@ -56,10 +57,125 @@ body {
     z-index: -1;
 }
 
-.dashboard-container {
-    max-width: 1400px;
-    margin: 0 auto;
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background: #111827;
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar-logo {
+    width: 32px;
+    height: 32px;
+}
+
+.sidebar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1.5rem 1rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item:hover {
+    background: var(--glass);
+    color: var(--text);
+}
+
+.nav-item.active {
+    background: linear-gradient(135deg, var(--primary), #4481eb);
+    color: white;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+}
+
+.sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.sidebar-btn {
+    width: 100%;
+    padding: 0.85rem;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.sidebar-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+.tab-content {
+    display: none;
     padding: 2rem;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 header {
@@ -179,6 +295,23 @@ select, .btn-primary {
 select option {
     background: #1e293b;
     color: var(--text);
+}
+
+input[type="text"], input[type="password"], input[type="number"] {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
+    border-color: var(--primary);
+    background: var(--glass);
+    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.15);
 }
 
 select:hover, .btn-primary:hover {
@@ -372,13 +505,20 @@ tr:hover td {
 
 .modal-content {
     background: #1e293b;
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 0;
     border: 1px solid var(--glass-border);
-    width: 500px;
+    width: 550px;
+    max-height: 90vh; /* Ngăn modal trào ra ngoài 90% chiều cao màn hình */
     border-radius: 20px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
+    display: flex; /* Dùng flex để chia Layout */
+    flex-direction: column;
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto; /* Cho phép cuộn dọc nội dung bên trong */
 }
 
 .modal-header {

@@ -42,6 +42,13 @@ def export_to_json(db_path='education.db', output_file='education_data.json'):
         school_dict['is_standard'] = bool(school_dict['is_standard'])
         schools.append(school_dict)
 
+    # Fetch GDTX stats
+    cursor.execute("SELECT category, sub_category, unit, value FROM gdtx_stats WHERE school_year = ?", (year,))
+    gdtx_rows = cursor.fetchall()
+    gdtx_data = []
+    for row in gdtx_rows:
+        gdtx_data.append(dict(row))
+
     data = {
         "metadata": {
             "title": "Dữ liệu Giáo dục Tiểu học (Chi tiết)",
@@ -49,7 +56,8 @@ def export_to_json(db_path='education.db', output_file='education_data.json'):
             "total_schools": len(schools),
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         },
-        "schools": schools
+        "schools": schools,
+        "gdtx": gdtx_data
     }
 
     with open(output_file, 'w', encoding='utf-8') as f:

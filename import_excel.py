@@ -17,7 +17,7 @@ class ExcelImporter:
         self.pg_conn_str = pg_conn_str
         self.password = password
         self.conn = None
-        self.prefix = db_config.TABLE_PREFIX 
+        self.prefix = db_config.TABLE_PREFIX if db_type != 'sqlite' else ""
 
     def connect(self, password=None):
         if self.db_type == 'sqlite':
@@ -91,6 +91,71 @@ class ExcelImporter:
                 })
         
         return mapping_status, headers
+
+    def get_mapping_status_gdtx(self, file_path):
+        """Returns which sheets and key cells are mapped for GDTX."""
+        mapping_status = []
+        try:
+            xl = pd.ExcelFile(file_path)
+            sheets = xl.sheet_names
+            
+            expected_sheets = ['Truong lop', 'Hoc Sinh', 'Nhan Su', 'Ngan Sach']
+            for sheet in expected_sheets:
+                mapping_status.append({
+                    'category': 'Sheet',
+                    'column': f"Sheet: {sheet}",
+                    'status': 'OK' if sheet in sheets else 'MISSING'
+                })
+            
+            # Additional checks inside sheets if they exist
+            if 'Truong lop' in sheets:
+                df = pd.read_excel(xl, 'Truong lop', header=None)
+                val = str(df.iloc[8, 1]) if len(df) > 8 and len(df.columns) > 1 else ""
+                ok = 'Tổng số' in val
+                mapping_status.append({
+                    'category': 'Dữ liệu',
+                    'column': 'Dữ liệu B9 (Truong lop): Tổng số',
+                    'status': 'OK' if ok else 'MISSING'
+                })
+                
+            if 'Hoc Sinh' in sheets:
+                df = pd.read_excel(xl, 'Hoc Sinh', header=None)
+                val = str(df.iloc[4, 1]) if len(df) > 4 and len(df.columns) > 1 else ""
+                ok = 'Tổng số' in val
+                mapping_status.append({
+                    'category': 'Dữ liệu',
+                    'column': 'Dữ liệu B5 (Hoc Sinh): Tổng số',
+                    'status': 'OK' if ok else 'MISSING'
+                })
+            
+            if 'Nhan Su' in sheets:
+                df = pd.read_excel(xl, 'Nhan Su', header=None)
+                val = str(df.iloc[5, 1]) if len(df) > 5 and len(df.columns) > 1 else ""
+                ok = 'Tổng số cán bộ' in val or 'Tổng số' in val
+                mapping_status.append({
+                    'category': 'Dữ liệu',
+                    'column': 'Dữ liệu B6 (Nhan Su): Tổng số cán bộ',
+                    'status': 'OK' if ok else 'MISSING'
+                })
+
+            if 'Ngan Sach' in sheets:
+                df = pd.read_excel(xl, 'Ngan Sach', header=None)
+                val = str(df.iloc[4, 1]) if len(df) > 4 and len(df.columns) > 1 else ""
+                ok = 'Giáo dục Thường xuyên' in val or 'Tổng chi' in val
+                mapping_status.append({
+                    'category': 'Dữ liệu',
+                    'column': 'Dữ liệu B5 (Ngan Sach): Dữ liệu ngân sách',
+                    'status': 'OK' if ok else 'MISSING'
+                })
+
+        except Exception as e:
+            mapping_status.append({
+                'category': 'Lỗi',
+                'column': f'Lỗi đọc file GDTX: {str(e)}',
+                'status': 'MISSING'
+            })
+            
+        return mapping_status, []
 
     def detect_level(self, file_path):
         fn = file_path.lower()
@@ -244,6 +309,118 @@ class ExcelImporter:
         self.close()
         return imported_count
 
-if __name__ == "__main__":
+    def import_gdtx(self, file_path, year):
+        """Specialized importer for GDTX aggregate data."""
+        print(f"Connecting to database ({self.db_type})...")
+        self.connect()
+        cursor = self.conn.cursor()
+        print(f"Opening Excel file: {file_path}")
+        
+        # Initialize schema if this is MySQL or SQLite
+        if self.db_type == 'sqlite':
+            with open('database_schema.sql', 'r', encoding='utf-8') as f:
+                cursor.executescript(f.read())
+        elif self.db_type == 'mysql':
+            print("Checking/Creating MySQL schema for GDTX...")
+            with open('schema_mysql.sql', 'r', encoding='utf-8') as f:
+                schema_sql = f.read()
+                for statement in schema_sql.split(';'):
+                    if statement.strip():
+                        cursor.execute(statement)
+            self.conn.commit()
+            
+        # Determine table name
+        table_name = f"{self.prefix}gdtx_stats"
+        
+        try:
+            print("Reading sheets...")
+            xl = pd.ExcelFile(file_path)
+            
+            # 1. Truong lop (Centers)
+            df_centers = pd.read_excel(xl, 'Truong lop', header=None)
+            center_mappings = [
+                ('Trung tâm GDTX', 'Tổng số', 8, 5),
+                ('Trung tâm GDTX', 'Cấp tỉnh', 9, 5),
+                ('Trung tâm GDTX', 'Cấp huyện', 10, 5),
+            ]
+            for cat, sub, r, c in center_mappings:
+                val = self.to_int(df_centers.iloc[r, c])
+                self._insert_gdtx(cursor, table_name, cat, sub, 'trung tâm', val, year)
+
+            # 2. Hoc Sinh (Learners)
+            df_students = pd.read_excel(xl, 'Hoc Sinh', header=None)
+            student_mappings = [
+                ('Học viên', 'Tổng số', 4, 4),
+                ('Học viên', 'Nữ', 4, 5),
+                ('Học viên', 'Dân tộc thiểu số', 4, 6),
+                ('Học viên', 'Lớp 10', 20, 4),
+                ('Học viên', 'Lớp 11', 21, 4),
+                ('Học viên', 'Lớp 12', 22, 4),
+            ]
+            for cat, sub, r, c in student_mappings:
+                val = self.to_int(df_students.iloc[r, c])
+                self._insert_gdtx(cursor, table_name, cat, sub, 'học viên', val, year)
+
+            # 3. Nhan Su (Personnel)
+            df_personnel = pd.read_excel(xl, 'Nhan Su', header=None)
+            total_staff_val = self.to_int(df_personnel.iloc[5, 4])
+            mgmt_val = self.to_int(df_personnel.iloc[6, 4])
+            teacher_val = self.to_int(df_personnel.iloc[17, 4])
+            other_val = total_staff_val - mgmt_val - teacher_val
+
+            self._insert_gdtx(cursor, table_name, 'Nhân sự', 'Tổng số', 'người', total_staff_val, year)
+            self._insert_gdtx(cursor, table_name, 'Nhân sự', 'Cán bộ quản lý', 'người', mgmt_val, year)
+            self._insert_gdtx(cursor, table_name, 'Nhân sự', 'Giáo viên', 'người', teacher_val, year)
+            self._insert_gdtx(cursor, table_name, 'Nhân sự', 'Nhân viên', 'người', other_val, year)
+
+            # 4. Ngan Sach (Budget)
+            df_budget = pd.read_excel(xl, 'Ngan Sach', header=None)
+            budget_mappings = [
+                ('Ngân sách', 'Tổng chi', 4, 5),
+                ('Ngân sách', 'Chi thường xuyên', 9, 5),
+                ('Ngân sách', 'Chi thanh toán cá nhân', 10, 5),
+            ]
+            for cat, sub, r, c in budget_mappings:
+                raw_val = df_budget.iloc[r, c]
+                # Filter out string separators and convert
+                try:
+                    if isinstance(raw_val, str):
+                        val = float(raw_val.replace('.', '').replace(',', '.'))
+                    else:
+                        val = float(raw_val)
+                except:
+                    val = 0
+                self._insert_gdtx(cursor, table_name, cat, sub, 'triệu đồng', val, year)
+
+            self.conn.commit()
+            print(f"Successfully imported GDTX data for {year}")
+            return True
+        except Exception as e:
+            print(f"Error importing GDTX: {e}")
+            self.conn.rollback()
+            return False
+        finally:
+            self.close()
+
+    def _insert_gdtx(self, cursor, table, cat, sub, unit, val, year):
+        if self.db_type == 'sqlite':
+            sql = f"INSERT OR REPLACE INTO {table} (category, sub_category, unit, value, school_year) VALUES (?, ?, ?, ?, ?)"
+            cursor.execute(sql, (cat, sub, unit, val, year))
+        else:
+            sql = f"INSERT INTO {table} (category, sub_category, unit, value, school_year) VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE value=%s"
+            cursor.execute(sql, (cat, sub, unit, val, year, val))
+
+if __name__ == '__main__':
+    import sys
     importer = ExcelImporter()
-    importer.run_import('h:/Work/AI/ioc-giaoduc-draft/Cơ sở giáo dục tiểu học trên địa bàn tỉnh.xlsx', '2024-2025')
+    
+    if len(sys.argv) > 3 and sys.argv[1] == 'gdtx':
+        importer.import_gdtx(sys.argv[2], sys.argv[3])
+    else:
+        # Default legacy behavior or help
+        file = 'h:/Work/AI/ioc-giaoduc-draft/Cơ sở giáo dục tiểu học trên địa bàn tỉnh.xlsx'
+        year = '2024-2025'
+        if len(sys.argv) > 2:
+            file = sys.argv[1]
+            year = sys.argv[2]
+        importer.run_import(file, year)

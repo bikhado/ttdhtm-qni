@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+        // Tab switching logic
+        setupTabs();
+
         // Use the global EDUCATION_DATA from data.js
         if (typeof EDUCATION_DATA === 'undefined') {
             throw new Error('EDUCATION_DATA is not defined. Make sure data.js is loaded.');
@@ -26,18 +29,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         filteredData = [...allData];
         
-        // Update header - rebranding to "Trung tâm Giám sát Giáo dục"
-        // Note: Year display is now handled by the filter-year select
-        
         initDashboard();
         setupFilters();
         setupModal();
         setupPagination();
+        
+        // Initialize GDTX if data exists
+        if (EDUCATION_DATA.gdtx) {
+            initGdtxDashboard();
+        }
     } catch (error) {
         console.error('Error loading data:', error);
         alert('Không thể tải dữ liệu. Vui lòng kiểm tra file data.js');
     }
 });
+
+function setupTabs() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tabId = item.getAttribute('data-tab');
+            
+            // Update nav active state
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            
+            // Update content visibility
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            // Refresh charts if needed
+            if (tabId === 'gdtx-view') {
+                initGdtxDashboard();
+            } else {
+                initDashboard();
+            }
+        });
+    });
+}
 
 function initDashboard() {
     updateStats();
@@ -102,13 +132,11 @@ function renderCharts() {
     charts.density = new Chart(document.getElementById('densityChart'), {
         type: 'bar',
         data: {
-            labels: topDensity.map(s => s.name.replace('Trường Tiểu học ', '')),
+            labels: topDensity.map(s => s.name.substring(0, 20) + '...'),
             datasets: [{
-                label: 'Học sinh / Lớp',
+                label: 'HS/Lớp',
                 data: topDensity.map(s => s.student_density),
-                backgroundColor: 'rgba(79, 172, 254, 0.6)',
-                borderColor: '#4facfe',
-                borderWidth: 1,
+                backgroundColor: 'rgba(244, 63, 94, 0.6)',
                 borderRadius: 5
             }]
         },
@@ -136,8 +164,7 @@ function renderCharts() {
             datasets: [{
                 data: Object.values(types),
                 backgroundColor: ['#4facfe', '#f43f5e'],
-                borderWidth: 0,
-                hoverOffset: 10
+                borderWidth: 0
             }]
         },
         options: {
@@ -163,7 +190,7 @@ function renderCharts() {
         data: {
             labels: Object.keys(facilities),
             datasets: [{
-                label: 'Tỷ lệ trường có phòng (%)',
+                label: '% Trường có',
                 data: Object.values(facilities).map(v => Math.round((v / total) * 100)),
                 backgroundColor: 'rgba(0, 242, 254, 0.4)',
                 borderColor: '#00f2fe',
@@ -174,11 +201,7 @@ function renderCharts() {
         options: {
             indexAxis: 'y',
             responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { max: 100, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { grid: { display: false } }
-            }
+            scales: { x: { max: 100 } }
         }
     });
 
@@ -197,25 +220,12 @@ function renderCharts() {
             datasets: [{
                 data: Object.values(personnel),
                 backgroundColor: ['#f43f5e', '#4facfe', '#10b981'],
-                borderWidth: 0,
-                hoverOffset: 10
+                borderWidth: 0
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#94a3b8' } },
-                tooltip: {
-                    callbacks: {
-                        label: function(item) {
-                            const val = item.raw;
-                            const total = Object.values(personnel).reduce((a, b) => a + b, 0);
-                            const perc = Math.round((val / total) * 100);
-                            return `${item.label}: ${val.toLocaleString()} (${perc}%)`;
-                        }
-                    }
-                }
-            },
+            plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } },
             cutout: '70%'
         }
     });
@@ -236,11 +246,8 @@ function renderCharts() {
         data: {
             labels: Object.keys(facilitySum),
             datasets: [{
-                label: 'Số lượng phòng',
                 data: Object.values(facilitySum),
                 backgroundColor: 'rgba(0, 242, 254, 0.6)',
-                borderColor: '#00f2fe',
-                borderWidth: 1,
                 borderRadius: 5
             }]
         },
@@ -248,8 +255,7 @@ function renderCharts() {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-                x: { grid: { display: false } }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } }
             }
         }
     });
@@ -269,7 +275,7 @@ function renderCharts() {
         data: {
             labels: activeGrades.map(g => g[0]),
             datasets: [{
-                label: 'Tổng số học sinh',
+                label: 'Học sinh',
                 data: activeGrades.map(g => g[1]),
                 backgroundColor: 'rgba(79, 172, 254, 0.7)',
                 borderRadius: 10
@@ -584,4 +590,130 @@ async function handleImport() {
         statusDiv.className = 'error';
         statusDiv.innerText = "❌ Lỗi kết nối server API.";
     }
+}
+// --- GDTX Dashboard Logic ---
+function initGdtxDashboard() {
+    if (!EDUCATION_DATA.gdtx) return;
+    renderGdtxStats();
+    renderGdtxCharts();
+    renderGdtxTable();
+}
+
+function renderGdtxStats() {
+    const gdtx = EDUCATION_DATA.gdtx;
+    const container = document.getElementById('gdtx-stats-cards');
+    if (!container) return;
+
+    // Helper to find metric
+    const getVal = (sub) => gdtx.find(d => d.sub_category === sub)?.value || 0;
+
+    const stats = [
+        { icon: '🏛️', label: 'Tổng số trung tâm', val: getVal('Tổng số').toLocaleString() },
+        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getVal('Tổng số').toLocaleString() }, // Total from learner sheet
+        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getVal('Tổng số').toLocaleString() }, // Total from personnel
+        { icon: '💰', label: 'Tổng ngân sách (Tr.đ)', val: getVal('Tổng chi').toLocaleString() }
+    ];
+
+    container.innerHTML = stats.map(s => `
+        <div class="stat-card">
+            <div class="icon">${s.icon}</div>
+            <div class="info">
+                <h3>${s.val}</h3>
+                <p>${s.label}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderGdtxCharts() {
+    const gdtx = EDUCATION_DATA.gdtx;
+    const getVal = (sub) => gdtx.find(d => d.sub_category === sub)?.value || 0;
+
+    // 1. Grade Chart
+    const gradeData = {
+        'Lớp 10': getVal('Lớp 10'),
+        'Lớp 11': getVal('Lớp 11'),
+        'Lớp 12': getVal('Lớp 12')
+    };
+
+    if (charts.gdtxGrade) charts.gdtxGrade.destroy();
+    charts.gdtxGrade = new Chart(document.getElementById('gdtxGradeChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(gradeData),
+            datasets: [{
+                label: 'Học viên',
+                data: Object.values(gradeData),
+                backgroundColor: 'rgba(79, 172, 254, 0.7)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // 2. Personnel Chart
+    const staffData = {
+        'Quản lý': getVal('Cán bộ quản lý'),
+        'Giáo viên': getVal('Giáo viên'),
+        'Nhân viên': getVal('Nhân viên')
+    };
+
+    if (charts.gdtxStaff) charts.gdtxStaff.destroy();
+    charts.gdtxStaff = new Chart(document.getElementById('gdtxPersonnelChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(staffData),
+            datasets: [{
+                data: Object.values(staffData),
+                backgroundColor: ['#f43f5e', '#4facfe', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // 3. Budget Chart
+    const budgetData = {
+        'Thanh toán cá nhân': getVal('Chi thanh toán cá nhân'),
+        'Chi thường xuyên': getVal('Chi thường xuyên')
+    };
+
+    if (charts.gdtxBudget) charts.gdtxBudget.destroy();
+    charts.gdtxBudget = new Chart(document.getElementById('gdtxBudgetChart'), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(budgetData),
+            datasets: [{
+                data: Object.values(budgetData),
+                backgroundColor: ['#fbbf24', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function renderGdtxTable() {
+    const gdtx = EDUCATION_DATA.gdtx;
+    const tbody = document.querySelector('#gdtx-table tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = gdtx.map(d => `
+        <tr>
+            <td><strong>${d.category}</strong></td>
+            <td>${d.sub_category}</td>
+            <td>${d.unit}</td>
+            <td><strong>${d.value.toLocaleString()}</strong></td>
+        </tr>
+    `).join('');
 }

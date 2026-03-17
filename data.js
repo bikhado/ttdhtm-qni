@@ -3,7 +3,7 @@ const EDUCATION_DATA = {
     "title": "Dữ liệu Giáo dục Tiểu học (Chi tiết)",
     "year": "2024-2025",
     "total_schools": 562,
-    "last_updated": "2026-03-13 14:54:45"
+    "last_updated": "2026-03-17 10:36:24"
   },
   "schools": [
     {
@@ -20237,6 +20237,104 @@ const EDUCATION_DATA = {
       "gym_rooms": 0,
       "bio_chem_phys_rooms": 0,
       "tech_rooms": 0
+    }
+  ],
+  "gdtx": [
+    {
+      "category": "Trung tâm GDTX",
+      "sub_category": "Tổng số",
+      "unit": "trung tâm",
+      "value": 14.0
+    },
+    {
+      "category": "Trung tâm GDTX",
+      "sub_category": "Cấp tỉnh",
+      "unit": "trung tâm",
+      "value": 2.0
+    },
+    {
+      "category": "Trung tâm GDTX",
+      "sub_category": "Cấp huyện",
+      "unit": "trung tâm",
+      "value": 12.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Tổng số",
+      "unit": "học viên",
+      "value": 6640.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Nữ",
+      "unit": "học viên",
+      "value": 2150.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Dân tộc thiểu số",
+      "unit": "học viên",
+      "value": 1599.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Lớp 10",
+      "unit": "học viên",
+      "value": 2109.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Lớp 11",
+      "unit": "học viên",
+      "value": 2619.0
+    },
+    {
+      "category": "Học viên",
+      "sub_category": "Lớp 12",
+      "unit": "học viên",
+      "value": 1912.0
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Tổng số",
+      "unit": "người",
+      "value": 243.0
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Cán bộ quản lý",
+      "unit": "người",
+      "value": 30.0
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Giáo viên",
+      "unit": "người",
+      "value": 180.0
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Nhân viên",
+      "unit": "người",
+      "value": 33.0
+    },
+    {
+      "category": "Ngân sách",
+      "sub_category": "Tổng chi",
+      "unit": "triệu đồng",
+      "value": 40081.87
+    },
+    {
+      "category": "Ngân sách",
+      "sub_category": "Chi thường xuyên",
+      "unit": "triệu đồng",
+      "value": 37268.87
+    },
+    {
+      "category": "Ngân sách",
+      "sub_category": "Chi thanh toán cá nhân",
+      "unit": "triệu đồng",
+      "value": 29159.58
     }
   ]
 };

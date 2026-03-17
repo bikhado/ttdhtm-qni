@@ -10,3 +10,19 @@ ENV/
 .venv
 education.db
 cleaned_data_preview.csv
+db_config.py
+
+# Data Files
+# data.js (Unignored to allow static view on Git)
+# education_data.json (Unignored if needed for static view)
+*.xlsx
+*.xls
+*.csv
+
+# Logs & Debug
+*.txt
+*.log
+
+# OS Specific
+.DS_Store
+Thumbs.db
