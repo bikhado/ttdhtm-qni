@@ -1,10 +1,10 @@
 import os
 
 # Database Connection Settings (MySQL)
-DB_HOST = "10.163.14.45"
-DB_NAME = "dtm_qni"
-DB_USER = "etl_qni"
-DB_PASS = "EtlQni#2021" # To be provided by user
+DB_HOST = ""
+DB_NAME = ""
+DB_USER = ""
+DB_PASS = "" # To be provided by user
 DB_PORT = 3306
 
 # Table Prefixes
