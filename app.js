@@ -34,9 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setupModal();
         setupPagination();
         
-        // Initialize GDTX if data exists
+        // Initialize auxiliary dashboards if data exists
         if (EDUCATION_DATA.gdtx) {
             initGdtxDashboard();
+        }
+        if (EDUCATION_DATA.khuyettat) {
+            initKhuyetTatDashboard();
         }
     } catch (error) {
         console.error('Error loading data:', error);
@@ -62,12 +65,21 @@ function setupTabs() {
             // Refresh charts if needed
             if (tabId === 'gdtx-view') {
                 initGdtxDashboard();
+            } else if (tabId === 'khuyettat-view') {
+                initKhuyetTatDashboard();
             } else {
                 initDashboard();
             }
         });
     });
 }
+
+// Set global Chart.js defaults for consistency
+Chart.defaults.responsive = true;
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.plugins.legend.labels.color = '#94a3b8';
+Chart.defaults.plugins.legend.position = 'bottom';
+Chart.defaults.color = '#94a3b8';
 
 function initDashboard() {
     updateStats();
@@ -600,18 +612,25 @@ function initGdtxDashboard() {
 }
 
 function renderGdtxStats() {
-    const gdtx = EDUCATION_DATA.gdtx;
+    const year = document.getElementById('filter-year-gdtx')?.value || 'all';
+    const gdtx = EDUCATION_DATA.gdtx.filter(d => year === 'all' || d.school_year === year || !d.school_year);
     const container = document.getElementById('gdtx-stats-cards');
     if (!container) return;
 
     // Helper to find metric
-    const getVal = (sub) => gdtx.find(d => d.sub_category === sub)?.value || 0;
+    const getMetric = (cat, sub) => {
+        const found = gdtx.find(d => 
+            String(d.category).trim().toLowerCase() === cat.trim().toLowerCase() && 
+            String(d.sub_category).trim().toLowerCase() === sub.trim().toLowerCase()
+        );
+        return found ? found.value : 0;
+    };
 
     const stats = [
-        { icon: '🏛️', label: 'Tổng số trung tâm', val: getVal('Tổng số').toLocaleString() },
-        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getVal('Tổng số').toLocaleString() }, // Total from learner sheet
-        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getVal('Tổng số').toLocaleString() }, // Total from personnel
-        { icon: '💰', label: 'Tổng ngân sách (Tr.đ)', val: getVal('Tổng chi').toLocaleString() }
+        { icon: '🏛️', label: 'Tổng số trung tâm', val: getMetric('Trung tâm GDTX', 'Tổng số').toLocaleString() },
+        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getMetric('Học viên', 'Tổng số').toLocaleString() },
+        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getMetric('Nhân sự', 'Tổng số').toLocaleString() },
+        { icon: '💰', label: 'Tổng ngân sách (Tr.đ)', val: getMetric('Ngân sách', 'Tổng chi').toLocaleString() }
     ];
 
     container.innerHTML = stats.map(s => `
@@ -626,14 +645,21 @@ function renderGdtxStats() {
 }
 
 function renderGdtxCharts() {
-    const gdtx = EDUCATION_DATA.gdtx;
-    const getVal = (sub) => gdtx.find(d => d.sub_category === sub)?.value || 0;
+    const year = document.getElementById('filter-year-gdtx')?.value || 'all';
+    const gdtx = EDUCATION_DATA.gdtx.filter(d => year === 'all' || d.school_year === year || !d.school_year);
+    
+    const getMetric = (cat, sub) => gdtx.find(d => 
+        String(d.category).trim() === cat && 
+        String(d.sub_category).trim() === sub
+    )?.value || 0;
+
+    const getVal = (sub) => gdtx.find(d => String(d.sub_category).trim() === sub)?.value || 0;
 
     // 1. Grade Chart
     const gradeData = {
-        'Lớp 10': getVal('Lớp 10'),
-        'Lớp 11': getVal('Lớp 11'),
-        'Lớp 12': getVal('Lớp 12')
+        'Lớp 10': getMetric('Học viên', 'Lớp 10'),
+        'Lớp 11': getMetric('Học viên', 'Lớp 11'),
+        'Lớp 12': getMetric('Học viên', 'Lớp 12')
     };
 
     if (charts.gdtxGrade) charts.gdtxGrade.destroy();
@@ -657,9 +683,9 @@ function renderGdtxCharts() {
 
     // 2. Personnel Chart
     const staffData = {
-        'Quản lý': getVal('Cán bộ quản lý'),
-        'Giáo viên': getVal('Giáo viên'),
-        'Nhân viên': getVal('Nhân viên')
+        'Quản lý': getMetric('Nhân sự', 'Cán bộ quản lý'),
+        'Giáo viên': getMetric('Nhân sự', 'Giáo viên'),
+        'Nhân viên': getMetric('Nhân sự', 'Nhân viên')
     };
 
     if (charts.gdtxStaff) charts.gdtxStaff.destroy();
@@ -681,8 +707,8 @@ function renderGdtxCharts() {
 
     // 3. Budget Chart
     const budgetData = {
-        'Thanh toán cá nhân': getVal('Chi thanh toán cá nhân'),
-        'Chi thường xuyên': getVal('Chi thường xuyên')
+        'Chi thường xuyên': getMetric('Ngân sách', 'Chi thường xuyên'),
+        'Chi thanh toán cá nhân': getMetric('Ngân sách', 'Chi thanh toán cá nhân')
     };
 
     if (charts.gdtxBudget) charts.gdtxBudget.destroy();
@@ -692,7 +718,7 @@ function renderGdtxCharts() {
             labels: Object.keys(budgetData),
             datasets: [{
                 data: Object.values(budgetData),
-                backgroundColor: ['#fbbf24', '#8b5cf6'],
+                backgroundColor: ['#4facfe', '#10b981'],
                 borderWidth: 0
             }]
         },
@@ -704,11 +730,139 @@ function renderGdtxCharts() {
 }
 
 function renderGdtxTable() {
-    const gdtx = EDUCATION_DATA.gdtx;
+    const year = document.getElementById('filter-year-gdtx')?.value || 'all';
+    const gdtx = EDUCATION_DATA.gdtx.filter(d => year === 'all' || d.school_year === year || !d.school_year);
     const tbody = document.querySelector('#gdtx-table tbody');
     if (!tbody) return;
 
     tbody.innerHTML = gdtx.map(d => `
+        <tr>
+            <td><strong>${d.category}</strong></td>
+            <td>${d.sub_category}</td>
+            <td>${d.unit}</td>
+            <td><strong>${d.value.toLocaleString()}</strong></td>
+        </tr>
+    `).join('');
+}
+
+// --- Khuyet Tat Logic ---
+function initKhuyetTatDashboard() {
+    if (!EDUCATION_DATA.khuyettat) return;
+    renderKhuyetTatStats();
+    renderKhuyetTatCharts();
+    renderKhuyetTatTable();
+}
+
+function renderKhuyetTatStats() {
+    const year = document.getElementById('filter-year-khuyettat')?.value || 'all';
+    const kt = EDUCATION_DATA.khuyettat.filter(d => year === 'all' || d.school_year === year || !d.school_year);
+    const container = document.getElementById('khuyettat-stats-cards');
+    if (!container) return;
+
+    const getMetric = (cat, sub) => kt.find(d => 
+        String(d.category).trim() === cat && 
+        String(d.sub_category).trim() === sub
+    )?.value || 0;
+
+    const stats = [
+        { icon: '🏫', label: 'Cơ sở Công lập', val: getMetric('Cơ sở', 'Công lập').toLocaleString() },
+        { icon: '🏫', label: 'Cơ sở Ngoài công lập', val: getMetric('Cơ sở', 'Ngoài công lập').toLocaleString() },
+        { icon: '👨‍🎓', label: 'HS Chuyên biệt', val: getMetric('Học sinh', 'Chuyên biệt').toLocaleString() },
+        { icon: '🤝', label: 'HS Hòa nhập', val: getMetric('Học viên Hòa nhập', 'Tổng số') || getMetric('Học sinh', 'Hòa nhập') }
+    ];
+    // Fallback for Hoa nhap if labels differ
+    if (stats[3].val === 0) stats[3].val = (kt.find(d => d.sub_category === 'Hòa nhập')?.value || 0);
+
+    container.innerHTML = stats.map(s => `
+        <div class="stat-card">
+            <div class="icon">${s.icon}</div>
+            <div class="info">
+                <h3>${typeof s.val === 'number' ? s.val.toLocaleString() : s.val}</h3>
+                <p>${s.label}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderKhuyetTatCharts() {
+    const year = document.getElementById('filter-year-khuyettat')?.value || 'all';
+    const kt = EDUCATION_DATA.khuyettat.filter(d => year === 'all' || d.school_year === year || !d.school_year);
+    
+    const getMetric = (cat, sub) => kt.find(d => 
+        String(d.category).trim() === cat && 
+        String(d.sub_category).trim() === sub
+    )?.value || 0;
+
+    const getVal = (sub) => kt.find(d => String(d.sub_category).trim() === sub)?.value || 0;
+
+    // Disability Type Chart
+    if (charts.ktType) charts.ktType.destroy();
+    charts.ktType = new Chart(document.getElementById('khuyettatTypeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Vận động', 'Nghe, nói', 'Nhìn', 'Thần kinh', 'Trí tuệ', 'Khác'],
+            datasets: [{
+                label: 'Số lượng',
+                data: [
+                    getMetric('Dạng tật', 'Vận động'), 
+                    getMetric('Dạng tật', 'Nghe, nói'), 
+                    getMetric('Dạng tật', 'Nhìn'), 
+                    getMetric('Dạng tật', 'Thần kinh, tâm thần'), 
+                    getMetric('Dạng tật', 'Trí tuệ'), 
+                    getMetric('Dạng tật', 'Khác')
+                ],
+                backgroundColor: 'rgba(244, 63, 94, 0.7)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y'
+        }
+    });
+
+    // Student Status Chart
+    if (charts.ktStudent) charts.ktStudent.destroy();
+    charts.ktStudent = new Chart(document.getElementById('khuyettatStudentChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Chuyên biệt', 'Hòa nhập'],
+            datasets: [{
+                data: [getVal('Chuyên biệt'), getVal('Hòa nhập')],
+                backgroundColor: ['#4facfe', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Staff Chart
+    if (charts.ktStaff) charts.ktStaff.destroy();
+    charts.ktStaff = new Chart(document.getElementById('khuyettatStaffChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Quản lý', 'Giáo viên', 'Nhân viên'],
+            datasets: [{
+                data: [getVal('Quản lý'), getVal('Giáo viên'), getVal('Nhân viên')],
+                backgroundColor: ['#f43f5e', '#4facfe', '#fbbf24'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function renderKhuyetTatTable() {
+    const year = document.getElementById('filter-year-khuyettat')?.value || 'all';
+    const kt = EDUCATION_DATA.khuyettat.filter(d => year === 'all' || d.school_year === year || !d.school_year);
+    const tbody = document.querySelector('#khuyettat-table tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = kt.map(d => `
         <tr>
             <td><strong>${d.category}</strong></td>
             <td>${d.sub_category}</td>

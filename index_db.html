@@ -12,28 +12,6 @@
 
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="sidebar-logo">
-                <h3 class="sidebar-title">IOC GIÁO DỤC (DB)</h3>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-tab="general-view">
-                    <span class="nav-icon">🏫</span>
-                    <span class="nav-text">Giáo dục Phổ thông</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="gdtx-view">
-                    <span class="nav-icon">🎓</span>
-                    <span class="nav-text">Giáo dục Thường xuyên</span>
-                </a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="import-btn" class="sidebar-btn" onclick="document.getElementById('admin-modal').style.display='block'">
-                    <span class="nav-icon">📥</span>
-                    <span class="nav-text">NHẬP DỮ LIÊU</span>
-                </button>
-            </div>
-        </aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
@@ -227,68 +205,85 @@
                 </section>
             </div>
 
-            <!-- TAB: Continuing Education (GDTX) -->
+            <!-- GDTX View -->
             <div id="gdtx-view" class="tab-content">
-                <header>
-                    <div class="header-top">
-                        <div class="brand">
-                            <span class="grid-icon">📊</span>
-                            <h2 style="font-size: 1.4rem; font-weight: 600;">IOC GDTX (MySQL)</h2>
-                            <div class="db-status" style="margin-left: 1rem;"><span class="dot"></span> Real-time Hub</div>
-                        </div>
-                        <div class="header-top-right">
-                            <div class="filter-item">
-                                <label>Năm học:</label>
-                                <select id="filter-year-gdtx">
-                                    <option value="2024-2025">2024-2025</option>
-                                </select>
-                            </div>
+                <div class="header-main">
+                    <div class="header-top-left">
+                        <h1>Giao diện Giáo dục Thường xuyên</h1>
+                    </div>
+                    <div class="header-top-right">
+                        <button class="btn-primary" onclick="document.getElementById('admin-modal').style.display='block'">📥 NHẬP DỮ LIỆU</button>
+                        <div class="filter-item">
+                            <label>Năm học:</label>
+                            <select id="filter-year-gdtx" onchange="loadGdtxData()">
+                                <option value="2024-2025">2024-2025</option>
+                                <option value="2023-2024">2023-2024</option>
+                            </select>
                         </div>
                     </div>
-                </header>
+                </div>
 
-                <section class="stats-grid" id="gdtx-stats-cards">
-                    <!-- Populated by JS -->
-                </section>
+                <div class="stats-grid" id="gdtx-stats-cards">
+                    <!-- Stats will be loaded via JS -->
+                </div>
 
-                <section class="charts-grid gdtx-charts-area">
-                    <div class="chart-container wide-chart">
-                        <h3>Phân bổ Học viên theo Khối lớp (GDTX)</h3>
-                        <div class="chart-height">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cơ cấu Học viên theo khối lớp</h3>
+                        </div>
+                        <div class="chart-container">
                             <canvas id="gdtxGradeChart"></canvas>
                         </div>
                     </div>
-                </section>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Phân bổ Nhân sự</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="gdtxPersonnelChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cơ cấu Ngân sách thực hiện</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="gdtxBudgetChart"></canvas>
+                        </div>
+                    </div>
+                </div>
 
-                <section class="charts-grid secondary-charts">
-                    <div class="chart-container">
-                        <h3>Cơ cấu Nhân sự trung tâm</h3>
-                        <canvas id="gdtxPersonnelChart"></canvas>
+                <div class="table-section luxury-card">
+                    <div class="table-header">
+                        <h3>Dữ liệu chi tiết GDTX</h3>
                     </div>
-                    <div class="chart-container">
-                        <h3>Phân bổ kinh phí</h3>
-                        <canvas id="gdtxBudgetChart"></canvas>
-                    </div>
-                </section>
-                
-                <section class="table-section glass">
-                    <h3>Dữ liệu thô GDTX</h3>
                     <div class="table-wrapper">
                         <table id="gdtx-table">
                             <thead>
                                 <tr>
                                     <th>Danh mục</th>
-                                    <th>Hạng mục</th>
-                                    <th>Đơn vị</th>
-                                    <th>Giá trị</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
                         </table>
                     </div>
                 </section>
             </div>
         </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="general-view">
+                <span class="nav-icon">🏫</span>
+                <span class="nav-text">Phổ thông</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="gdtx-view">
+                <span class="nav-icon">📖</span>
+                <span class="nav-text">Thường xuyên</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="khuyettat-view">
+                <span class="nav-icon">♿</span>
+                <span class="nav-text">Khuyết tật</span>
+            </a>
+        </nav>
     </div>
 
     <div id="admin-modal" class="modal">
@@ -314,6 +309,7 @@
                                 <option value="THCS">Trung học cơ sở (THCS)</option>
                                 <option value="THPT">Trung học phổ thông (THPT)</option>
                                 <option value="GDTX">Giáo dục Thường xuyên (GDTX)</option>
+                                <option value="KhuyetTat">Giáo dục Khuyết tật</option>
                             </select>
                         </div>
                     </div>

@@ -157,6 +157,37 @@ class ExcelImporter:
             
         return mapping_status, []
 
+    def get_mapping_status_khuyettat(self, file_path):
+        """Returns which sheets and key cells are mapped for Special Education."""
+        mapping_status = []
+        try:
+            xl = pd.ExcelFile(file_path)
+            sheets = xl.sheet_names
+            
+            expected_sheets = ['Trường', 'Qui mô', 'Đội ngũ']
+            for sheet in expected_sheets:
+                mapping_status.append({
+                    'category': 'Sheet',
+                    'column': f"Sheet: {sheet}",
+                    'status': 'OK' if sheet in sheets else 'MISSING'
+                })
+            
+            if 'Trường' in sheets:
+                mapping_status.append({'category': 'Dữ liệu', 'column': 'Sheet Trường: OK', 'status': 'OK'})
+            if 'Qui mô' in sheets:
+                mapping_status.append({'category': 'Dữ liệu', 'column': 'Sheet Qui mô: OK', 'status': 'OK'})
+            if 'Đội ngũ' in sheets:
+                mapping_status.append({'category': 'Dữ liệu', 'column': 'Sheet Đội ngũ: OK', 'status': 'OK'})
+
+        except Exception as e:
+            mapping_status.append({
+                'category': 'Lỗi',
+                'column': f'Lỗi đọc file Khuyết tật: {str(e)}',
+                'status': 'MISSING'
+            })
+            
+        return mapping_status, []
+
     def detect_level(self, file_path):
         fn = file_path.lower()
         if 'tiểu học' in fn: return 'Tiểu học'
@@ -402,11 +433,85 @@ class ExcelImporter:
         finally:
             self.close()
 
+    def import_khuyettat(self, file_path, year):
+        """Specialized importer for Special Education (Khuyết tật) aggregate data."""
+        self.connect()
+        cursor = self.conn.cursor()
+        
+        # Initialize schema
+        if self.db_type == 'sqlite':
+            with open('database_schema.sql', 'r', encoding='utf-8') as f:
+                cursor.executescript(f.read())
+        elif self.db_type == 'mysql':
+            with open('schema_mysql.sql', 'r', encoding='utf-8') as f:
+                schema_sql = f.read()
+                for statement in schema_sql.split(';'):
+                    if statement.strip():
+                        cursor.execute(statement)
+            self.conn.commit()
+            
+        table_name = f"{self.prefix}khuyettat_stats"
+        
+        try:
+            xl = pd.ExcelFile(file_path)
+            
+            # 1. Sheet: Trường
+            if 'Trường' in xl.sheet_names:
+                df = pd.read_excel(xl, 'Trường', header=None)
+                # B9: Công lập, B10: Ngoài công lập
+                self._insert_khuyettat(cursor, table_name, 'Cơ sở', 'Công lập', 'trường', self.to_int(df.iloc[8, 5]), year)
+                self._insert_khuyettat(cursor, table_name, 'Cơ sở', 'Ngoài công lập', 'trường', self.to_int(df.iloc[9, 5]), year)
+            
+            # 2. Sheet: Qui mô
+            if 'Qui mô' in xl.sheet_names:
+                df = pd.read_excel(xl, 'Qui mô', header=None)
+                # 2.1.1.1. Khuyết tật vận động -> Row 6, Col 8 (Công lập - Tổng số)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Vận động', 'học sinh', self.to_int(df.iloc[6, 8]), year)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Nghe, nói', 'học sinh', self.to_int(df.iloc[11, 8]), year)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Nhìn', 'học sinh', self.to_int(df.iloc[16, 8]), year)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Thần kinh, tâm thần', 'học sinh', self.to_int(df.iloc[21, 8]), year)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Trí tuệ', 'học sinh', self.to_int(df.iloc[26, 8]), year)
+                self._insert_khuyettat(cursor, table_name, 'Dạng tật', 'Khác', 'học sinh', self.to_int(df.iloc[31, 8]), year)
+                
+                # Tống số học sinh chuyên biệt
+                self._insert_khuyettat(cursor, table_name, 'Học sinh', 'Chuyên biệt', 'học sinh', self.to_int(df.iloc[4, 8]), year)
+                # Tổng số học sinh hòa nhập (Row 41)
+                self._insert_khuyettat(cursor, table_name, 'Học sinh', 'Hòa nhập', 'học sinh', self.to_int(df.iloc[41, 8]), year)
+
+            # 3. Sheet: Đội ngũ
+            if 'Đội ngũ' in xl.sheet_names:
+                df = pd.read_excel(xl, 'Đội ngũ', header=None)
+                # 3.1. Tổng số cán bộ, giáo viên, nhân viên -> Row 5, Col 4
+                self._insert_khuyettat(cursor, table_name, 'Nhân sự', 'Tổng số', 'người', self.to_int(df.iloc[5, 4]), year)
+                # Bút lục Row 8: CBQL, Row 11: Giáo viên, Row 38: Nhân viên
+                self._insert_khuyettat(cursor, table_name, 'Nhân sự', 'Quản lý', 'người', self.to_int(df.iloc[8, 4]), year)
+                self._insert_khuyettat(cursor, table_name, 'Nhân sự', 'Giáo viên', 'người', self.to_int(df.iloc[11, 4]), year)
+                self._insert_khuyettat(cursor, table_name, 'Nhân sự', 'Nhân viên', 'người', self.to_int(df.iloc[38, 4]), year)
+
+            self.conn.commit()
+            print(f"Successfully imported Special Education data for {year}")
+            return True
+        except Exception as e:
+            print(f"Error importing Special Education: {e}")
+            self.conn.rollback()
+            return False
+        finally:
+            self.close()
+
     def _insert_gdtx(self, cursor, table, cat, sub, unit, val, year):
         if self.db_type == 'sqlite':
             sql = f"INSERT OR REPLACE INTO {table} (category, sub_category, unit, value, school_year) VALUES (?, ?, ?, ?, ?)"
             cursor.execute(sql, (cat, sub, unit, val, year))
         else:
+            sql = f"INSERT INTO {table} (category, sub_category, unit, value, school_year) VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE value=%s"
+            cursor.execute(sql, (cat, sub, unit, val, year, val))
+
+    def _insert_khuyettat(self, cursor, table, cat, sub, unit, val, year):
+        if self.db_type == 'sqlite':
+            sql = f"INSERT OR REPLACE INTO {table} (category, sub_category, unit, value, school_year) VALUES (?, ?, ?, ?, ?)"
+            cursor.execute(sql, (cat, sub, unit, val, year))
+        else:
+            # Need unique key on (category, sub_category, school_year)
             sql = f"INSERT INTO {table} (category, sub_category, unit, value, school_year) VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE value=%s"
             cursor.execute(sql, (cat, sub, unit, val, year, val))
 

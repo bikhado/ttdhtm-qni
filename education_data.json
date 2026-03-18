@@ -3,7 +3,7 @@
     "title": "Dữ liệu Giáo dục Tiểu học (Chi tiết)",
     "year": "2024-2025",
     "total_schools": 562,
-    "last_updated": "2026-03-17 10:36:24"
+    "last_updated": "2026-03-18 10:12:20"
   },
   "schools": [
     {
@@ -20244,97 +20244,213 @@
       "category": "Trung tâm GDTX",
       "sub_category": "Tổng số",
       "unit": "trung tâm",
-      "value": 14.0
+      "value": 14.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Trung tâm GDTX",
       "sub_category": "Cấp tỉnh",
       "unit": "trung tâm",
-      "value": 2.0
+      "value": 2.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Trung tâm GDTX",
       "sub_category": "Cấp huyện",
       "unit": "trung tâm",
-      "value": 12.0
+      "value": 12.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Tổng số",
       "unit": "học viên",
-      "value": 6640.0
+      "value": 6640.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Nữ",
       "unit": "học viên",
-      "value": 2150.0
+      "value": 2150.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Dân tộc thiểu số",
       "unit": "học viên",
-      "value": 1599.0
+      "value": 1599.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Lớp 10",
       "unit": "học viên",
-      "value": 2109.0
+      "value": 2109.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Lớp 11",
       "unit": "học viên",
-      "value": 2619.0
+      "value": 2619.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Học viên",
       "sub_category": "Lớp 12",
       "unit": "học viên",
-      "value": 1912.0
+      "value": 1912.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Nhân sự",
       "sub_category": "Tổng số",
       "unit": "người",
-      "value": 243.0
+      "value": 243.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Nhân sự",
       "sub_category": "Cán bộ quản lý",
       "unit": "người",
-      "value": 30.0
+      "value": 30.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Nhân sự",
       "sub_category": "Giáo viên",
       "unit": "người",
-      "value": 180.0
+      "value": 180.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Nhân sự",
       "sub_category": "Nhân viên",
       "unit": "người",
-      "value": 33.0
+      "value": 33.0,
+      "school_year": "2024-2025"
     },
     {
       "category": "Ngân sách",
       "sub_category": "Tổng chi",
       "unit": "triệu đồng",
-      "value": 40081.87
+      "value": 40081.87,
+      "school_year": "2024-2025"
     },
     {
       "category": "Ngân sách",
       "sub_category": "Chi thường xuyên",
       "unit": "triệu đồng",
-      "value": 37268.87
+      "value": 37268.87,
+      "school_year": "2024-2025"
     },
     {
       "category": "Ngân sách",
       "sub_category": "Chi thanh toán cá nhân",
       "unit": "triệu đồng",
-      "value": 29159.58
+      "value": 29159.58,
+      "school_year": "2024-2025"
+    }
+  ],
+  "khuyettat": [
+    {
+      "category": "Cơ sở",
+      "sub_category": "Công lập",
+      "unit": "trường",
+      "value": 0.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Cơ sở",
+      "sub_category": "Ngoài công lập",
+      "unit": "trường",
+      "value": 2.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Vận động",
+      "unit": "học sinh",
+      "value": 3.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Nghe, nói",
+      "unit": "học sinh",
+      "value": 34.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Nhìn",
+      "unit": "học sinh",
+      "value": 1.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Thần kinh, tâm thần",
+      "unit": "học sinh",
+      "value": 3.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Trí tuệ",
+      "unit": "học sinh",
+      "value": 93.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Dạng tật",
+      "sub_category": "Khác",
+      "unit": "học sinh",
+      "value": 29.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Học sinh",
+      "sub_category": "Chuyên biệt",
+      "unit": "học sinh",
+      "value": 170.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Học sinh",
+      "sub_category": "Hòa nhập",
+      "unit": "học sinh",
+      "value": 3.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Tổng số",
+      "unit": "người",
+      "value": 6.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Quản lý",
+      "unit": "người",
+      "value": 4.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Giáo viên",
+      "unit": "người",
+      "value": 0.0,
+      "school_year": "2024-2025"
+    },
+    {
+      "category": "Nhân sự",
+      "sub_category": "Nhân viên",
+      "unit": "người",
+      "value": 0.0,
+      "school_year": "2024-2025"
     }
   ]
 }

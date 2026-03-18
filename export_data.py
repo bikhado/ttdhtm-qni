@@ -43,11 +43,12 @@ def export_to_json(db_path='education.db', output_file='education_data.json'):
         schools.append(school_dict)
 
     # Fetch GDTX stats
-    cursor.execute("SELECT category, sub_category, unit, value FROM gdtx_stats WHERE school_year = ?", (year,))
-    gdtx_rows = cursor.fetchall()
-    gdtx_data = []
-    for row in gdtx_rows:
-        gdtx_data.append(dict(row))
+    cursor.execute("SELECT category, sub_category, unit, value, school_year FROM gdtx_stats WHERE school_year = ?", (year,))
+    gdtx_data = [dict(row) for row in cursor.fetchall()]
+
+    # Fetch Khuyet Tat stats
+    cursor.execute("SELECT category, sub_category, unit, value, school_year FROM khuyettat_stats WHERE school_year = ?", (year,))
+    kt_data = [dict(row) for row in cursor.fetchall()]
 
     data = {
         "metadata": {
@@ -57,7 +58,8 @@ def export_to_json(db_path='education.db', output_file='education_data.json'):
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         },
         "schools": schools,
-        "gdtx": gdtx_data
+        "gdtx": gdtx_data,
+        "khuyettat": kt_data
     }
 
     with open(output_file, 'w', encoding='utf-8') as f:

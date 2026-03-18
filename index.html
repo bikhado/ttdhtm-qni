@@ -15,22 +15,6 @@
     
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="Quoc_Huy_Viet_Nam_Chuan.png" alt="Logo" class="sidebar-logo">
-                <h3 class="sidebar-title">IOC GIÁO DỤC</h3>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-tab="general-view">
-                    <span class="nav-icon">🏫</span>
-                    <span class="nav-text">Giáo dục Phổ thông</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="gdtx-view">
-                    <span class="nav-icon">🎓</span>
-                    <span class="nav-text">Giáo dục Thường xuyên</span>
-                </a>
-            </nav>
-        </aside>
 
         <!-- Main Content Area -->
         <main class="main-content">
@@ -148,38 +132,63 @@
             </div>
         </section>
 
-        <section class="charts-grid">
-            <div class="chart-container wide-chart">
-                <h3>Phân bổ Học sinh theo Khối lớp</h3>
-                <div class="chart-height">
+        <section class="charts-grid" style="grid-template-columns: 1fr;">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Phân bổ Học sinh theo Khối lớp</h3>
+                </div>
+                <div class="chart-container" style="min-height: 400px;">
                     <canvas id="gradeDistributionChart"></canvas>
                 </div>
             </div>
         </section>
 
         <section class="charts-grid secondary-charts">
-            <div class="chart-container">
-                <h3>Cơ cấu Nhân sự (Toàn ngành)</h3>
-                <canvas id="personnelChart"></canvas>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Cơ cấu Nhân sự (Toàn ngành)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="personnelChart"></canvas>
+                </div>
             </div>
-            <div class="chart-container">
-                <h3>Cơ sở vật chất (Chi tiết số lượng)</h3>
-                <canvas id="facilityDetailChart"></canvas>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Cơ sở vật chất (Chi tiết số lượng)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="facilityDetailChart"></canvas>
+                </div>
             </div>
         </section>
 
         <section class="charts-grid">
-            <div class="chart-container main-chart">
-                <h3>Phân bổ Mật độ học sinh/Lớp (Top 10 trường cao nhất)</h3>
-                <canvas id="densityChart"></canvas>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Phân bổ Mật độ học sinh/Lớp (Top 10 trường cao nhất)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="densityChart"></canvas>
+                </div>
             </div>
-            <div class="chart-container side-chart">
-                <h3>Loại hình Cơ sở</h3>
-                <canvas id="typeChart"></canvas>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Loại hình Cơ sở</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
             </div>
-            <div class="chart-container wide-chart">
-                <h3>Trạng thái Cơ sở vật chất (% trường có phòng chức năng)</h3>
-                <canvas id="facilityChart"></canvas>
+        </section>
+
+        <section class="charts-grid" style="grid-template-columns: 1fr;">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Trạng thái Cơ sở vật chất (% trường có phòng chức năng)</h3>
+                </div>
+                <div class="chart-container" style="min-height: 400px;">
+                    <canvas id="facilityChart"></canvas>
+                </div>
             </div>
         </section>
 
@@ -233,8 +242,9 @@
                         <div class="header-top-right">
                             <div class="filter-item">
                                 <label>Năm học:</label>
-                                <select id="filter-year-gdtx">
+                                <select id="filter-year-gdtx" onchange="initGdtxDashboard()">
                                     <option value="2024-2025">2024-2025</option>
+                                    <option value="2023-2024">2023-2024</option>
                                 </select>
                             </div>
                         </div>
@@ -245,27 +255,146 @@
                     <!-- Populated by JS -->
                 </section>
 
-                <section class="charts-grid gdtx-charts-area">
-                    <div class="chart-container wide-chart">
-                        <h3>Phân bổ Học viên theo Khối lớp (GDTX)</h3>
-                        <div class="chart-height">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cơ cấu Học viên theo khối lớp</h3>
+                        </div>
+                        <div class="chart-container">
                             <canvas id="gdtxGradeChart"></canvas>
                         </div>
                     </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Phân bổ Nhân sự</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="gdtxPersonnelChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid" style="grid-template-columns: 1fr;">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Cơ cấu Ngân sách thực hiện</h3>
+                        </div>
+                        <div class="chart-container" style="min-height: 400px;">
+                            <canvas id="gdtxBudgetChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-section luxury-card">
+                    <div class="table-header">
+                        <h3>Dữ liệu chi tiết GDTX</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="gdtx-table">
+                            <thead>
+                                <tr>
+                                    <th>Danh mục</th>
+                                    <th>Phân loại</th>
+                                    <th>Đơn vị</th>
+                                    <th>Giá trị</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Special Education (Khuyet Tat) -->
+            <div id="khuyettat-view" class="tab-content">
+                <header>
+                    <div class="header-top">
+                        <div class="brand">
+                            <span class="grid-icon">♿</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 600;">Thống kê Giáo dục Khuyết tật</h2>
+                        </div>
+                        <div class="header-top-right">
+                            <div class="filter-item">
+                                <label>Năm học:</label>
+                                <select id="filter-year-khuyettat" onchange="initKhuyetTatDashboard()">
+                                    <option value="2024-2025">2024-2025</option>
+                                    <option value="2023-2024">2023-2024</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <section class="stats-grid" id="khuyettat-stats-cards">
+                    <!-- Stats will be loaded via JS -->
                 </section>
 
-                <section class="charts-grid secondary-charts">
-                    <div class="chart-container">
-                        <h3>Cơ cấu Nhân sự trung tâm</h3>
-                        <canvas id="gdtxPersonnelChart"></canvas>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Phân bổ theo dạng tật</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="khuyettatTypeChart"></canvas>
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <h3>Phân bổ kinh phí</h3>
-                        <canvas id="gdtxBudgetChart"></canvas>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Phân loại Học sinh</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="khuyettatStudentChart"></canvas>
+                        </div>
                     </div>
-                </section>
+                </div>
+
+                <div class="charts-grid" style="grid-template-columns: 1fr;">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Đội ngũ Nhân sự</h3>
+                        </div>
+                        <div class="chart-container" style="min-height: 400px;">
+                            <canvas id="khuyettatStaffChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-section luxury-card">
+                    <div class="table-header">
+                        <h3>Bảng chi tiết số liệu Khuyết tật</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="khuyettat-table">
+                            <thead>
+                                <tr>
+                                    <th>Danh mục</th>
+                                    <th>Phân loại</th>
+                                    <th>Đơn vị</th>
+                                    <th>Giá trị</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="general-view">
+                <span class="nav-icon">🏫</span>
+                <span class="nav-text">Phổ thông</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="gdtx-view">
+                <span class="nav-icon">📖</span>
+                <span class="nav-text">Thường xuyên</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="khuyettat-view">
+                <span class="nav-icon">♿</span>
+                <span class="nav-text">Khuyết tật</span>
+            </a>
+        </nav>
     </div>
     <script src="data.js"></script>
     <script src="app.js"></script>

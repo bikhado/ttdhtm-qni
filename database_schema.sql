@@ -79,3 +79,14 @@ CREATE TABLE IF NOT EXISTS gdtx_stats (
     school_year TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Khuyet Tat (Special Education) stats
+CREATE TABLE IF NOT EXISTS khuyettat_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    sub_category TEXT,
+    unit TEXT,
+    value REAL,
+    school_year TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

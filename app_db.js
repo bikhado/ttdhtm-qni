@@ -65,6 +65,8 @@ function setupTabs() {
             
             if (tabId === 'gdtx-view') {
                 loadGdtxData();
+            } else if (tabId === 'khuyettat-view') {
+                loadKhuyetTatData();
             } else {
                 initDashboard();
             }
@@ -589,7 +591,10 @@ async function handleImport() {
     }
 
     try {
-        const endpoint = level === 'GDTX' ? 'http://localhost:5000/api/import-gdtx' : 'http://localhost:5000/api/import';
+        let endpoint = 'http://localhost:5000/api/import';
+        if (level === 'GDTX') endpoint = 'http://localhost:5000/api/import-gdtx';
+        if (level === 'KhuyetTat') endpoint = 'http://localhost:5000/api/import-khuyettat';
+        
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -645,13 +650,18 @@ async function loadGdtxData() {
 function renderGdtxStats() {
     const container = document.getElementById('gdtx-stats-cards');
     if (!container) return;
-    const getVal = (sub) => gdtxData.find(d => d.sub_category === sub)?.value || 0;
+    
+    // Helper to find metric
+    const getMetric = (cat, sub) => gdtxData.find(d => 
+        String(d.category).trim().toLowerCase() === cat.trim().toLowerCase() && 
+        String(d.sub_category).trim().toLowerCase() === sub.trim().toLowerCase()
+    )?.value || 0;
 
     const stats = [
-        { icon: '🏛️', label: 'Tổng số trung tâm', val: getVal('Tổng số').toLocaleString() },
-        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getVal('Tổng số').toLocaleString() },
-        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getVal('Tổng số').toLocaleString() },
-        { icon: '💰', label: 'Tổng ngân sách (Tr.đ)', val: getVal('Tổng chi').toLocaleString() }
+        { icon: '🏛️', label: 'Tổng số trung tâm', val: getMetric('Trung tâm GDTX', 'Tổng số').toLocaleString() },
+        { icon: '👨‍🎓', label: 'Tổng số học viên', val: getMetric('Học viên', 'Tổng số').toLocaleString() },
+        { icon: '👩‍🏫', label: 'Tổng số nhân sự', val: getMetric('Nhân sự', 'Tổng số').toLocaleString() },
+        { icon: (getMetric('Ngân sách', 'Tổng chi') > 0 ? '💰' : '📊'), label: 'Tổng ngân sách (Tr.đ)', val: getMetric('Ngân sách', 'Tổng chi').toLocaleString() }
     ];
 
     container.innerHTML = stats.map(s => `
@@ -666,7 +676,10 @@ function renderGdtxStats() {
 }
 
 function renderGdtxCharts() {
-    const getVal = (sub) => gdtxData.find(d => d.sub_category === sub)?.value || 0;
+    const getMetric = (cat, sub) => gdtxData.find(d => 
+        String(d.category).trim() === cat && 
+        String(d.sub_category).trim() === sub
+    )?.value || 0;
 
     // Grade Chart
     if (charts.gdtxGrade) charts.gdtxGrade.destroy();
@@ -676,7 +689,11 @@ function renderGdtxCharts() {
             labels: ['Lớp 10', 'Lớp 11', 'Lớp 12'],
             datasets: [{
                 label: 'Học viên',
-                data: [getVal('Lớp 10'), getVal('Lớp 11'), getVal('Lớp 12')],
+                data: [
+                    getMetric('Học viên', 'Lớp 10'),
+                    getMetric('Học viên', 'Lớp 11'),
+                    getMetric('Học viên', 'Lớp 12')
+                ],
                 backgroundColor: 'rgba(79, 172, 254, 0.7)',
                 borderRadius: 8
             }]
@@ -695,7 +712,11 @@ function renderGdtxCharts() {
         data: {
             labels: ['Quản lý', 'Giáo viên', 'Nhân viên'],
             datasets: [{
-                data: [getVal('Cán bộ quản lý'), getVal('Giáo viên'), getVal('Nhân viên')],
+                data: [
+                    getMetric('Nhân sự', 'Cán bộ quản lý'), 
+                    getMetric('Nhân sự', 'Giáo viên'), 
+                    getMetric('Nhân sự', 'Nhân viên')
+                ],
                 backgroundColor: ['#f43f5e', '#4facfe', '#10b981'],
                 borderWidth: 0
             }]
@@ -726,6 +747,130 @@ function renderGdtxTable() {
     const tbody = document.querySelector('#gdtx-table tbody');
     if (!tbody) return;
     tbody.innerHTML = gdtxData.map(d => `
+        <tr>
+            <td><strong>${d.category}</strong></td>
+            <td>${d.sub_category}</td>
+            <td>${d.unit}</td>
+            <td><strong>${d.value.toLocaleString()}</strong></td>
+        </tr>
+    `).join('');
+}
+
+// --- Khuyet Tat Logic ---
+let khuyetTatData = [];
+
+async function loadKhuyetTatData() {
+    try {
+        const year = document.getElementById('filter-year-khuyettat')?.value || '2024-2025';
+        const response = await fetch(`http://localhost:5000/api/khuyettat?db_type=mysql&year=${year}`);
+        khuyetTatData = await response.json();
+        
+        if (khuyetTatData.error) throw new Error(khuyetTatData.error);
+        
+        renderKhuyetTatStats();
+        renderKhuyetTatCharts();
+        renderKhuyetTatTable();
+    } catch (err) {
+        console.error("Khuyet Tat Load Error:", err);
+    }
+}
+
+function renderKhuyetTatStats() {
+    const container = document.getElementById('khuyettat-stats-cards');
+    if (!container) return;
+    const getVal = (sub) => khuyetTatData.find(d => d.sub_category === sub)?.value || 0;
+
+    const stats = [
+        { icon: '🏫', label: 'Cơ sở Công lập', val: getVal('Công lập').toLocaleString() },
+        { icon: '🏫', label: 'Cơ sở Ngoài công lập', val: getVal('Ngoài công lập').toLocaleString() },
+        { icon: '👨‍🎓', label: 'HS Chuyên biệt', val: getVal('Chuyên biệt').toLocaleString() },
+        { icon: '🤝', label: 'HS Hòa nhập', val: getVal('Hòa nhập').toLocaleString() }
+    ];
+
+    container.innerHTML = stats.map(s => `
+        <div class="stat-card">
+            <div class="icon">${s.icon}</div>
+            <div class="info">
+                <h3>${s.val}</h3>
+                <p>${s.label}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderKhuyetTatCharts() {
+    const getMetric = (cat, sub) => khuyetTatData.find(d => 
+        String(d.category).trim() === cat && 
+        String(d.sub_category).trim() === sub
+    )?.value || 0;
+
+    const getVal = (sub) => khuyetTatData.find(d => String(d.sub_category).trim() === sub)?.value || 0;
+
+    // Disability Type Chart
+    if (charts.ktType) charts.ktType.destroy();
+    charts.ktType = new Chart(document.getElementById('khuyettatTypeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Vận động', 'Nghe, nói', 'Nhìn', 'Thần kinh', 'Trí tuệ', 'Khác'],
+            datasets: [{
+                label: 'Số lượng',
+                data: [
+                    getVal('Vận động'), 
+                    getVal('Nghe, nói'), 
+                    getVal('Nhìn'), 
+                    getMetric('Dạng tật', 'Thần kinh, tâm thần'), 
+                    getVal('Trí tuệ'), 
+                    getVal('Khác')
+                ],
+                backgroundColor: 'rgba(244, 63, 94, 0.7)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y'
+        }
+    });
+
+    // Student Status Chart
+    if (charts.ktStudent) charts.ktStudent.destroy();
+    charts.ktStudent = new Chart(document.getElementById('khuyettatStudentChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Chuyên biệt', 'Hòa nhập'],
+            datasets: [{
+                data: [getVal('Chuyên biệt'), getVal('Hòa nhập')],
+                backgroundColor: ['#4facfe', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Staff Chart
+    if (charts.ktStaff) charts.ktStaff.destroy();
+    charts.ktStaff = new Chart(document.getElementById('khuyettatStaffChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Quản lý', 'Giáo viên', 'Nhân viên'],
+            datasets: [{
+                data: [getVal('Quản lý'), getVal('Giáo viên'), getVal('Nhân viên')],
+                backgroundColor: ['#f43f5e', '#4facfe', '#fbbf24'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function renderKhuyetTatTable() {
+    const tbody = document.querySelector('#khuyettat-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = khuyetTatData.map(d => `
         <tr>
             <td><strong>${d.category}</strong></td>
             <td>${d.sub_category}</td>
